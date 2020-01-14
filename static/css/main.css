@@ -174,7 +174,7 @@ iframe {
 
 .row:hover {
   background-color: #ececff;
-  cursor: pointer;
+  /* cursor: pointer; */
 }
 
 /* The sidebar menu */
@@ -209,4 +209,8 @@ iframe {
 .main {
   margin-left: 150px; /* Same as the width of the sidebar */
   padding: 0px 0px;
+}
+
+.cursor-pointer {
+  cursor: pointer;
 }

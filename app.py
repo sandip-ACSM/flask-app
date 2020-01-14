@@ -50,7 +50,25 @@ def home():
 
 @app.route("/<string:graph_name>.png", methods=['GET', 'POST'])
 def home_plot_graph(graph_name):
-	if graph_name == 'skew':
+	if graph_name == 'cust_num':
+		fig = create_line_plot()
+		output = io.BytesIO()
+		FigureCanvas(fig).print_png(output)
+		return Response(output.getvalue(), mimetype='image/png')
+
+	elif graph_name == 'sale':
+		fig = create_line_plot()
+		output = io.BytesIO()
+		FigureCanvas(fig).print_png(output)
+		return Response(output.getvalue(), mimetype='image/png')
+
+	elif graph_name == 'avg_invoice':
+		fig = create_line_plot()
+		output = io.BytesIO()
+		FigureCanvas(fig).print_png(output)
+		return Response(output.getvalue(), mimetype='image/png')
+
+	elif graph_name == 'skew':
 		fig = create_line_plot()
 		output = io.BytesIO()
 		FigureCanvas(fig).print_png(output)

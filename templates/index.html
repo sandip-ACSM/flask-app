@@ -1,0 +1,127 @@
+{% extends "layout.html" %}
+{% block body %}
+	<!-- Page content -->
+	<div class="main">
+		<div class="limiter">
+			<div class="container-table100">
+				<div class="wrap-table100">
+					<h1 class="text-center">Overall Statistics</h1>
+					
+					<form action="/" method="post" name="yearlist">
+						<select id="yearselect" name="year">
+							<option hidden disabled selected value>-- select year --</option>
+							<option value="2017">2017</option>
+							<option value="2018">2018</option>
+							<option value="2019">2019</option>
+						</select>
+						<br><br>
+						<input class="btn btn-primary" id="yearsubmit" type="submit" value="Submit">
+						<!-- <button type="submit">Get Data</button> -->
+						<br><br>
+					</form>
+
+					<div class="table">
+						<!-- <div class="row header">
+							<div class="cell">Time bucket</div>
+							<div class="cell">Time bucket type</div>
+							<div class="cell">Total sale</div>
+							<div class="cell">Avg. invoice value</div>
+							<div class="cell">Avg. number of invoice/month</div>
+							<div class="cell">Avg. number of lines/invoice</div>
+							<div class="cell">Month end skew</div>
+						</div> -->
+						
+						<div class="row">
+							<div class="cell" style="font-family: Poppins-Bold;">
+								Year
+							</div>
+							<div class="cell">
+								Apr, {{ params.year }} - Mar, {{ (params.year|int) +1 }} 
+							</div>
+							<div class="cell">
+								<a href="" style="font-size:12px;" target="_blank"></a>
+							</div>
+						</div>
+						<div class="row">
+							<div class="cell" style="font-family: Poppins-Bold;">
+								Number of territories
+							</div>
+							<div class="cell">
+								{{ results[0] }} 
+							</div>
+							<div class="cell">
+								<a href="" style="font-size:12px;" target="_blank"></a>
+							</div>
+						</div>
+						<div class="row">
+							<div class="cell" style="font-family: Poppins-Bold;">
+								Number of customers
+							</div>
+							<div class="cell">
+								{{ results[1] }} 
+							</div>
+							<div class="cell">
+								<a href="" style="font-size:12px;" 
+								onclick="window.open('/cust_num.png','newwindow', 
+                         		'width=600,height=550'); 
+              					return false;">Show graph</a>
+							</div>
+						</div>
+						<div class="row">
+							<div class="cell" style="font-family: Poppins-Bold;">
+								Total sales
+							</div>
+							<div class="cell">
+								{{ (results[2]/10000000)|round(3) }} Cr
+							</div>
+							<div class="cell">
+								<a href="" style="font-size:12px;" 
+								onclick="window.open('/sale.png','newwindow', 
+                         		'width=600,height=550'); 
+              					return false;">Show graph</a>
+							</div>
+						</div>
+						<div class="row">
+							<div class="cell" style="font-family: Poppins-Bold;">
+								Average number of invoices/month
+							</div>
+							<div class="cell">
+								{{ results[3] }} 
+							</div>
+							<div class="cell">
+								<a href="" style="font-size:12px;" 
+								onclick="window.open('/avg_invoice.png','newwindow', 
+                         		'width=600,height=550'); 
+              					return false;">Show graph</a>
+							</div>
+						</div>
+						<div class="row">
+							<div class="cell" style="font-family: Poppins-Bold;">
+								Month-end skew
+							</div>
+							<div class="cell">
+								{{ results[4] }} %
+							</div>
+							<div class="cell">
+								<a href="" style="font-size:12px;" 
+								onclick="window.open('/skew.png','newwindow', 
+                         		'width=600,height=550'); 
+              					return false;">Show graph</a>
+							</div>
+						</div>
+
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script src="{{ url_for('static', filename='vendor/jquery/jquery-3.2.1.min.js') }}"></script>
+	<script>
+		$(document).ready(function(){
+			$("#yearinput").click(function(){
+				$("#yearselect").val();
+			});
+		});
+	</script>
+{% endblock %}

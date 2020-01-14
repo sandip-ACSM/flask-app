@@ -1,0 +1,11 @@
+{
+  "params":
+  {
+    "database_uri": "mysql://admin:123456@localhost:3306/salesdb",
+    "upload_location":"/home/sandip/Flask_webserver/flask_app/static/uploads",
+    "db_name": "salesdb",
+    "username": "admin",
+    "password": "123456",
+    "endpoint": "localhost"
+  }
+}

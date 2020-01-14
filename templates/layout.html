@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>Augmented SCM</title>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	
+	<link rel="icon" type="image/png" href="{{ url_for('static', filename='images/icons/favicon.ico') }}"/>
+	<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='vendor/bootstrap/css/bootstrap.min.css') }}">
+	<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='fonts/font-awesome-4.7.0/css/font-awesome.min.css') }}">
+	<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='vendor/animate/animate.css') }}">
+	<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='vendor/select2/select2.min.css') }}">
+	<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='vendor/perfect-scrollbar/perfect-scrollbar.css') }}">
+	<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/util.css') }}">
+	<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+
+<body>
+
+	<div class="sidenav">
+		<a href="/">Overall Statistics</a>
+		<a href="/seasonality">Seasonality</a>
+		<a href="/cagr">CAGR</a>
+		<a href="/top_contribution">Top Contribution Tables</a>
+		<a href="/top_growing_sales">Top Growing Sales</a>
+		<a href="/top_steady_sales">Top Steady Sales</a>
+		<a href="/top_declining_sales">Top Declining Sales</a>
+    </div>
+    {% block body %} {% endblock %}
+	<!-- <script type="text/javascript">
+	function validateRadio(){document.getElementsByName("radioform").submit();}
+	</script> -->
+
+	<!-- <script src="{{ url_for('static', filename='vendor/jquery/jquery-3.2.1.min.js') }}"></script> -->
+	<script src="{{ url_for('static', filename='vendor/bootstrap/js/popper.js') }}"></script>
+	<script src="{{ url_for('static', filename='vendor/bootstrap/js/bootstrap.min.js') }}"></script>
+	<script src="{{ url_for('static', filename='vendor/select2/select2.min.js') }}"></script>
+	<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+</body>
+</html>

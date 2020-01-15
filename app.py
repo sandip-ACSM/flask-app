@@ -11,6 +11,7 @@ import io
 import random
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
+import matplotlib.pyplot as plt
 
 
 with open('config.json', 'r') as c:
@@ -48,28 +49,67 @@ def home():
 	return render_template('index.html', params=params, results=results)
 
 
-@app.route("/<string:graph_name>.png", methods=['GET', 'POST'])
+@app.route("/<string:graph_name>.png", methods=['GET'])
 def home_plot_graph(graph_name):
+	results = {}
+	cursor = db.cursor()
 	if graph_name == 'cust_num':
-		fig = create_line_plot()
+		query = '''SELECT territory_name, num_customers FROM territory_profile 
+		where time_bucket='{}' and time_bucket_type='year' order by num_customers;
+		'''.format(params['year'])
+		cursor.execute(query)
+		results = cursor.fetchall()
+		[x,y] = list(zip(*results))
+		xlabel, ylabel = 'Territory', 'Customer number'
+		title = 'Territory-wise Customer number'
+		fig = create_line_plot(x, y, xlabel, ylabel,'bD--',title,\
+							   rotation=30, text_offset=0.05)
 		output = io.BytesIO()
 		FigureCanvas(fig).print_png(output)
 		return Response(output.getvalue(), mimetype='image/png')
 
 	elif graph_name == 'sale':
-		fig = create_line_plot()
+		query = '''SELECT territory_name, sale_val FROM territory_profile 
+		where time_bucket='{}' and time_bucket_type='year' order by sale_val;
+		'''.format(params['year'])
+		cursor.execute(query)
+		results = cursor.fetchall()
+		[x,y] = list(zip(*results))
+		y = [round(a/10000000,2) for a in y]
+		xlabel, ylabel = 'Territory', 'Sales (Crores)'
+		title = 'Territory-wise sales in Crores (ascending order)'
+		fig = create_line_plot(x, y, xlabel, ylabel,'bD--',title,\
+							   rotation=30, text_offset=0.05)
 		output = io.BytesIO()
 		FigureCanvas(fig).print_png(output)
 		return Response(output.getvalue(), mimetype='image/png')
 
 	elif graph_name == 'avg_invoice':
-		fig = create_line_plot()
+		query = '''SELECT territory_name, avg_num_invoice_per_month FROM territory_profile 
+		where time_bucket='{}' and time_bucket_type='year' order by avg_num_invoice_per_month;
+		'''.format(params['year'])
+		cursor.execute(query)
+		results = cursor.fetchall()
+		[x,y] = list(zip(*results))
+		xlabel, ylabel = 'Territory', 'Avg. number of invoices/month'
+		title = 'Territory-wise avg. number of invoices/month'
+		fig = create_line_plot(x, y, xlabel, ylabel,'bD--',title,\
+							   rotation=30, text_offset=0.4)
 		output = io.BytesIO()
 		FigureCanvas(fig).print_png(output)
 		return Response(output.getvalue(), mimetype='image/png')
 
-	elif graph_name == 'skew':
-		fig = create_line_plot()
+	elif graph_name == 'skew': 
+		query = '''SELECT territory_name, month_end_skew FROM territory_profile 
+		where time_bucket='{}' and time_bucket_type='year' order by month_end_skew;
+		'''.format(params['year'])
+		cursor.execute(query)
+		results = cursor.fetchall()
+		[x,y] = list(zip(*results))
+		xlabel, ylabel = 'Territory', 'Month end skew (%)'
+		title = 'Territory-wise month end skew in % (ascending order)'
+		fig = create_line_plot(x, y, xlabel, ylabel,'bD--',title,\
+							   rotation=30, text_offset=0.1)
 		output = io.BytesIO()
 		FigureCanvas(fig).print_png(output)
 		return Response(output.getvalue(), mimetype='image/png')
@@ -105,21 +145,45 @@ def top_declining_sales():
 	return render_template('top_declining_sales.html', params=params)
 
 
-def create_bar_plot():
-    fig = Figure()
-    axis = fig.add_subplot(1, 1, 1)
-    xs = range(100)
-    ys = [random.randint(1, 50) for x in xs]
-    axis.plot(xs, ys)
-    return fig
+# def create_bar_plot():
+#     fig = Figure()
+#     axis = fig.add_subplot(1, 1, 1)
+#     xs = range(100)
+#     ys = [random.randint(1, 50) for x in xs]
+#     axis.plot(xs, ys)
+#     return fig
 
-def create_line_plot():
-    fig = Figure()
-    axis = fig.add_subplot(1, 1, 1)
-    xs = range(100)
-    ys = [random.randint(1, 50) for x in xs]
-    axis.plot(xs, ys)
-    return fig
+# def create_line_plot():
+#     fig = Figure()
+#     axis = fig.add_subplot(1, 1, 1)
+#     xs = range(100)
+#     ys = [random.randint(1, 50) for x in xs]
+#     axis.plot(xs, ys)
+#     return fig
+
+def create_line_plot(x, y, xlabel, ylabel, linetype, title,
+                     xlimit=(), ylimit=(), rotation=0, text_offset=0):
+	fig = plt.figure(figsize=(12,8), dpi=100)
+	ax = fig.add_subplot(111)
+	plt.plot(range(len(x)), y, linetype, linewidth = 1.5)
+	plt.xlabel(xlabel, fontsize=14);
+	plt.ylabel(ylabel, fontsize=14)
+	plt.title(title, fontsize=15)
+	plt.grid(linestyle = '--', linewidth = 0.2, color = 'k')
+	plt.xticks(range(len(x)), x, fontsize=14, rotation=rotation); 
+	plt.yticks(fontsize=14)
+	for i, j in enumerate(y):
+		ax.text(i, j+text_offset, j, fontsize=15, ha='center')
+	if len(xlimit) !=0:
+		plt.xlim(xlimit[0], xlimit[1])
+	if len(ylimit) !=0:
+		plt.ylim(ylimit[0], ylimit[1])
+	plt.tight_layout()
+	ax.spines['top'].set_visible(False)
+	ax.spines['right'].set_visible(False)
+	ax.spines['bottom'].set_visible(False)
+	ax.spines['left'].set_visible(False)
+	return fig
 
 if __name__ == '__main__':
 	app.run(debug=True)

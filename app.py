@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 
 with open('config.json', 'r') as c:
 	params = json.load(c)["params"]
+global_data = {}
 
 app = Flask(__name__)
 # app.secret_key = '1253246754467'
@@ -25,6 +26,15 @@ app.config['UPLOAD_FOLDER'] = params['upload_location']
 
 db = pymysql.connect(params["endpoint"], params["username"], \
 					 params["password"], params["db_name"])
+
+year_list_query = '''
+	select distinct time_bucket from company_profile where time_bucket_type='year' 
+	order by time_bucket;
+	'''
+cursor1 = db.cursor()
+cursor1.execute(year_list_query)
+year_list_results = cursor1.fetchall()
+global_data['year_list'] = list(zip(*year_list_results))[0]
 
 
 @app.route("/", methods=['GET', 'POST'])
@@ -117,37 +127,115 @@ def home_plot_graph(graph_name):
 def seasonality():
 	results = {}
 	cursor = db.cursor()
-	year_list_query = '''
-	select distinct time_bucket from company_profile where time_bucket_type='year' 
-	order by time_bucket;
-	'''
-	cursor.execute(year_list_query)
-	year_list_results = cursor.fetchall()
-	year_list = list(zip(*year_list_results))[0]
 	query = '''select time_bucket, sale_val from 
 	company_profile where time_bucket_type='month' order by time_bucket;'''
 	cursor.execute(query)
 	month_list_results = cursor.fetchall()
 	# [month_list, sales_list] = list(zip(*month_list_results))
 	
-	for year in year_list:
+	for year in global_data['year_list']:
 		results[year] = {}
 		for x,y in (month_list_results):
 			if x[:4] == str(year):
 				results[year][x[5:]] = round(y/10000000,2)
-	print(results)
+	global_data['seasonality'] = results
 	return render_template('seasonality.html', params=params, results=results,\
-							year_list=year_list)
+							year_list=global_data['year_list'])
 
 
-@app.route("/cagr", methods=['GET', 'POST'])
-def cagr():
-	return render_template('cagr.html', params=params)
+@app.route("/seasonality/<string:graph_name>.png", methods=['GET'])
+def seasonality_plot_graph(graph_name):
+	monthly_sales_dict = global_data['seasonality'][graph_name]
+	x,y = list(monthly_sales_dict.keys()), list(monthly_sales_dict.values())
+	x = [int(a) for a in x]
+	y = [a for _,a in sorted(zip(x,y))]
+	# x.sort()
+	x = ['APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', \
+		 'DEC', 'JAN', 'FEB', 'MAR']
+	x = x[:len(y)]
+	xlabel, ylabel = 'Month', 'Sales (Crores)'
+	title = 'Month-wise plot (APR, {} - MAR, {})'.format(graph_name, int(graph_name)+1)
+	fig = create_line_plot(x, y, xlabel, ylabel,'bD--',title,\
+						   text_offset=0.3)
+	output = io.BytesIO()
+	FigureCanvas(fig).print_png(output)
+	return Response(output.getvalue(), mimetype='image/png')
 
 
 @app.route("/top_contribution", methods=['GET', 'POST'])
 def top_contribution():
-	return render_template('top_contribution.html', params=params)
+	results = {
+		'territory': {},
+		'customer': {},
+		'sku': {}
+	}
+	cursor = db.cursor()
+	for year in global_data['year_list']:
+		query_territory = '''
+		select territory_name, sale_val from territory_profile where 
+		time_bucket='{}' order by sale_val desc limit 3;'''.format(year)
+		cursor.execute(query_territory)
+		results['territory'][year] = cursor.fetchall()
+
+		query_customer = '''
+		select customer_name, sale_val from customer_profile where 
+		time_bucket='{}' order by sale_val desc limit 3;'''.format(year)
+		cursor.execute(query_customer)
+		results['customer'][year] = cursor.fetchall()
+
+		query_sku = '''
+		select sku_name, sale_val from sku_profile where 
+		time_bucket='{}' order by sale_val desc limit 3;'''.format(year)
+		cursor.execute(query_sku)
+		results['sku'][year] = cursor.fetchall()
+		
+	global_data['top_contribution'] = results
+	print(global_data['top_contribution'])
+	return render_template('top_contribution.html', params=params, results=results,\
+								year_list=global_data['year_list'])
+
+
+@app.route("/top_contribution/<string:graph_name>.png", methods=['GET'])
+def top_contribution_plot_graph(graph_name):
+	year = graph_name[:4]
+	entity = graph_name[5:-2]
+	rank = int(graph_name[-1])
+
+	entity_name = global_data['top_contribution'][entity][year][rank-1][0]
+
+	cursor = db.cursor()
+	query = '''
+	select time_bucket, sale_val from {}_profile where time_bucket_type='month' 
+	and {}_name='{}';
+	'''.format(entity, entity, entity_name)
+	cursor.execute(query)
+	month_list_results = cursor.fetchall()
+	# [month_list, sales_list] = list(zip(*month_list_results))
+	
+	monthly_sales_dict = {}
+	for x,y in month_list_results:
+		if x[:4] == str(year):
+			monthly_sales_dict[x[5:]] = y
+
+	x,y = list(monthly_sales_dict.keys()), list(monthly_sales_dict.values())
+	x = [int(a) for a in x]
+	y = [a for _,a in sorted(zip(x,y))]
+	y = [round(a/10000000,2) for a in y]
+	# x.sort()
+	x = ['APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', \
+		 'DEC', 'JAN', 'FEB', 'MAR']
+	x = x[:len(y)]
+	xlabel, ylabel = 'Month', 'Sales (Crores)'
+	title = 'Top 3'
+	fig = create_line_plot(x, y, xlabel, ylabel,'bD--',title,\
+						   text_offset=max(y)/40)
+	output = io.BytesIO()
+	FigureCanvas(fig).print_png(output)
+	return Response(output.getvalue(), mimetype='image/png')
+
+@app.route("/cagr", methods=['GET', 'POST'])
+def cagr():
+	return render_template('cagr.html', params=params)
 
 
 @app.route("/top_growing_sales", methods=['GET', 'POST'])

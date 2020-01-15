@@ -64,7 +64,7 @@
 								<a href="" style="font-size:12px;" 
 								onclick="window.open('/cust_num.png','newwindow', 
                          		'width=700,height=550'); 
-              					return false;">Show graph</a>
+              					return false;">Details</a>
 							</div>
 						</div>
 						<div class="row">
@@ -72,13 +72,13 @@
 								Total sales
 							</div>
 							<div class="cell">
-								{{ (results[2]/10000000)|round(3) }} Cr
+								{{ (results[2]/10000000)|round(2) }} Cr
 							</div>
 							<div class="cell">
 								<a href="" style="font-size:12px;" 
 								onclick="window.open('/sale.png','newwindow', 
                          		'width=700,height=550'); 
-              					return false;">Show graph</a>
+              					return false;">Details</a>
 							</div>
 						</div>
 						<div class="row">
@@ -92,7 +92,7 @@
 								<a href="" style="font-size:12px;" 
 								onclick="window.open('/avg_invoice.png','newwindow', 
                          		'width=700,height=550'); 
-              					return false;">Show graph</a>
+              					return false;">Details</a>
 							</div>
 						</div>
 						<div class="row">
@@ -106,7 +106,7 @@
 								<a href="" style="font-size:12px;" 
 								onclick="window.open('/skew.png','newwindow', 
                          		'width=700,height=550'); 
-              					return false;">Show graph</a>
+              					return false;">Details</a>
 							</div>
 						</div>
 
@@ -116,7 +116,6 @@
 		</div>
 	</div>
 
-	<script src="{{ url_for('static', filename='vendor/jquery/jquery-3.2.1.min.js') }}"></script>
 	<script>
 		$(document).ready(function(){
 			$("#yearinput").click(function(){

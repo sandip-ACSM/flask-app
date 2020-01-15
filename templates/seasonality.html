@@ -1,4 +1,104 @@
 {% extends "layout.html" %}
 {% block body %}
-<h1 class="text-center">Seasonality</h1>
+	<!-- Page content -->
+	<div class="main">
+		<div class="limiter">
+			<div class="container-table100">
+				<div class="wrap-table100">
+					<h1 class="text-center">Seasonality</h1>
+					
+					<!-- <form action="/" method="post" name="yearlist">
+						<select id="yearselect" name="year" class="cursor-pointer">
+							<option hidden disabled selected value>-- select year --</option>
+							<option value="2017">2017</option>
+							<option value="2018">2018</option>
+							<option value="2019">2019</option>
+						</select>
+						<br><br>
+						<input class="btn btn-primary cursor-pointer" id="yearsubmit" type="submit" value="Submit">
+						<br><br>
+					</form> -->
+
+					<div class="table">
+						<div class="row header">
+                            <div class="cell">Year</div>
+							<div class="cell">APR</div>
+							<div class="cell">MAY</div>
+							<div class="cell">JUN</div>
+                            <div class="cell">JUL</div>
+                            <div class="cell">AUG</div>
+							<div class="cell">SEP</div>
+							<div class="cell">OCT</div>
+                            <div class="cell">NOV</div>
+                            <div class="cell">DEC</div>
+							<div class="cell">JAN</div>
+							<div class="cell">FEB</div>
+							<div class="cell">MAR</div>
+                        </div>
+
+                        {% for year in year_list %}
+                        
+                        <div class="row">
+							<div class="cell" style="font-family: Poppins-Bold;">
+                                {{ year }} &nbsp;
+                                <a href="" 
+                                style="font-size:12px;" 
+								onclick="window.open('/sale.png','newwindow', 
+                         		'width=700,height=550'); 
+                                  return false;">
+                                <span class="glyphicon glyphicon-stats"></span>  
+                                </a>
+							</div>
+							<div class="cell">
+								{{ results[year]['1'] }}
+							</div>
+							<div class="cell">
+								{{ results[year]['2'] }}
+                            </div>
+                            <div class="cell">
+								{{ results[year]['3'] }}
+                            </div>
+                            <div class="cell">
+								{{ results[year]['4'] }}
+                            </div>
+                            <div class="cell">
+								{{ results[year]['5'] }}
+                            </div>
+                            <div class="cell">
+								{{ results[year]['6'] }}
+                            </div>
+                            <div class="cell">
+								{{ results[year]['7'] }}
+                            </div>
+                            <div class="cell">
+								{{ results[year]['8'] }}
+                            </div>
+                            <div class="cell">
+								{{ results[year]['9'] }}
+                            </div>
+                            <div class="cell">
+								{{ results[year]['10'] }}
+                            </div>
+                            <div class="cell">
+								{{ results[year]['11'] }}
+                            </div>
+                            <div class="cell">
+								{{ results[year]['12'] }}
+                            </div>
+                        </div>
+                        {% endfor %}
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script src="{{ url_for('static', filename='vendor/jquery/jquery-3.2.1.min.js') }}"></script>
+	<script>
+		$(document).ready(function(){
+			$("#yearinput").click(function(){
+				$("#yearselect").val();
+			});
+		});
+	</script>
 {% endblock %}

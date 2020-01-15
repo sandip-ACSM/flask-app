@@ -29,8 +29,7 @@ db = pymysql.connect(params["endpoint"], params["username"], \
 
 @app.route("/", methods=['GET', 'POST'])
 def home():
-	results = {}
-	cursor = db.cursor()
+	cursor = db.cursor() 
 
 	query = '''SELECT num_territories, num_customers, sale_val, 
 	avg_num_invoice_per_month, month_end_skew FROM 
@@ -51,11 +50,10 @@ def home():
 
 @app.route("/<string:graph_name>.png", methods=['GET'])
 def home_plot_graph(graph_name):
-	results = {}
 	cursor = db.cursor()
 	if graph_name == 'cust_num':
 		query = '''SELECT territory_name, num_customers FROM territory_profile 
-		where time_bucket='{}' and time_bucket_type='year' order by num_customers;
+		where time_bucket='{}' and time_bucket_type='year' order by num_customers desc;
 		'''.format(params['year'])
 		cursor.execute(query)
 		results = cursor.fetchall()
@@ -70,23 +68,23 @@ def home_plot_graph(graph_name):
 
 	elif graph_name == 'sale':
 		query = '''SELECT territory_name, sale_val FROM territory_profile 
-		where time_bucket='{}' and time_bucket_type='year' order by sale_val;
+		where time_bucket='{}' and time_bucket_type='year' order by sale_val desc;
 		'''.format(params['year'])
 		cursor.execute(query)
 		results = cursor.fetchall()
 		[x,y] = list(zip(*results))
 		y = [round(a/10000000,2) for a in y]
 		xlabel, ylabel = 'Territory', 'Sales (Crores)'
-		title = 'Territory-wise sales in Crores (ascending order)'
+		title = 'Territory-wise sales in Crores'
 		fig = create_line_plot(x, y, xlabel, ylabel,'bD--',title,\
 							   rotation=30, text_offset=0.05)
 		output = io.BytesIO()
 		FigureCanvas(fig).print_png(output)
 		return Response(output.getvalue(), mimetype='image/png')
 
-	elif graph_name == 'avg_invoice':
+	elif graph_name == 'avg_invoice': 
 		query = '''SELECT territory_name, avg_num_invoice_per_month FROM territory_profile 
-		where time_bucket='{}' and time_bucket_type='year' order by avg_num_invoice_per_month;
+		where time_bucket='{}' and time_bucket_type='year' order by avg_num_invoice_per_month desc;
 		'''.format(params['year'])
 		cursor.execute(query)
 		results = cursor.fetchall()
@@ -101,13 +99,13 @@ def home_plot_graph(graph_name):
 
 	elif graph_name == 'skew': 
 		query = '''SELECT territory_name, month_end_skew FROM territory_profile 
-		where time_bucket='{}' and time_bucket_type='year' order by month_end_skew;
+		where time_bucket='{}' and time_bucket_type='year' order by month_end_skew desc;
 		'''.format(params['year'])
 		cursor.execute(query)
 		results = cursor.fetchall()
 		[x,y] = list(zip(*results))
 		xlabel, ylabel = 'Territory', 'Month end skew (%)'
-		title = 'Territory-wise month end skew in % (ascending order)'
+		title = 'Territory-wise month end skew in %'
 		fig = create_line_plot(x, y, xlabel, ylabel,'bD--',title,\
 							   rotation=30, text_offset=0.1)
 		output = io.BytesIO()
@@ -117,7 +115,29 @@ def home_plot_graph(graph_name):
 
 @app.route("/seasonality", methods=['GET', 'POST'])
 def seasonality():
-	return render_template('seasonality.html', params=params)
+	results = {}
+	cursor = db.cursor()
+	year_list_query = '''
+	select distinct time_bucket from company_profile where time_bucket_type='year' 
+	order by time_bucket;
+	'''
+	cursor.execute(year_list_query)
+	year_list_results = cursor.fetchall()
+	year_list = list(zip(*year_list_results))[0]
+	query = '''select time_bucket, sale_val from 
+	company_profile where time_bucket_type='month' order by time_bucket;'''
+	cursor.execute(query)
+	month_list_results = cursor.fetchall()
+	# [month_list, sales_list] = list(zip(*month_list_results))
+	
+	for year in year_list:
+		results[year] = {}
+		for x,y in (month_list_results):
+			if x[:4] == str(year):
+				results[year][x[5:]] = round(y/10000000,2)
+	print(results)
+	return render_template('seasonality.html', params=params, results=results,\
+							year_list=year_list)
 
 
 @app.route("/cagr", methods=['GET', 'POST'])

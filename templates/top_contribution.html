@@ -21,12 +21,18 @@
                         
                         <div class="row">
 							<div class="cell" style="font-family: Poppins-Bold;">
-                                {{ year }} &nbsp;
+                                {{ year }} <br>
+                                <a href="" style="font-size:12px;" 
+                                onclick="window.open('/top_contribution/{{ year }}_territory_0.png','newwindow', 
+                                'width=700,height=550'); 
+                                return false;">
+                                <span class="glyphicon glyphicon-stats"></span>
+                                </a>
 							</div>
 							<div class="cell">
                                 <div style="font-family: Poppins-Bold;">{{ results['territory'][year][0][0] }}</div>
                                 <br>
-                                {{ (results['territory'][year][0][1]/10000000)|round(2) }} Cr
+                                {{ (results['territory'][year][0][1])|round(2) }} %
                                 <a href="" 
                                 style="font-size:12px;" 
 								onclick="window.open('/top_contribution/{{ year }}_territory_1.png','newwindow', 
@@ -38,7 +44,7 @@
 							<div class="cell">
 								<div style="font-family: Poppins-Bold;">{{ results['territory'][year][1][0] }}</div>
                                 <br>
-                                {{ (results['territory'][year][1][1]/10000000)|round(2) }} Cr
+                                {{ (results['territory'][year][1][1])|round(2) }} %
                                 <a href="" 
                                 style="font-size:12px;" 
 								onclick="window.open('/top_contribution/{{ year }}_territory_2.png','newwindow', 
@@ -50,7 +56,7 @@
                             <div class="cell">
 								<div style="font-family: Poppins-Bold;">{{ results['territory'][year][2][0] }}</div>
                                 <br>
-                                {{ (results['territory'][year][2][1]/10000000)|round(2) }} Cr
+                                {{ (results['territory'][year][2][1])|round(2) }} %
                                 <a href="" 
                                 style="font-size:12px;" 
 								onclick="window.open('/top_contribution/{{ year }}_territory_3.png','newwindow', 
@@ -77,12 +83,18 @@
                         
                         <div class="row">
 							<div class="cell" style="font-family: Poppins-Bold;">
-                                {{ year }} &nbsp;
+                                {{ year }} <br>
+                                <a href="" style="font-size:12px;" 
+                                onclick="window.open('/top_contribution/{{ year }}_customer_0.png','newwindow', 
+                                'width=700,height=550'); 
+                                return false;">
+                                <span class="glyphicon glyphicon-stats"></span>
+                                </a>
 							</div>
 							<div class="cell">
                                 <div style="font-family: Poppins-Bold;">{{ results['customer'][year][0][0] }}</div>
                                 <br>
-                                {{ (results['customer'][year][0][1]/10000000)|round(2) }} Cr
+                                {{ (results['customer'][year][0][1])|round(2) }} %
                                 <a href="" 
                                 style="font-size:12px;" 
 								onclick="window.open('/top_contribution/{{ year }}_customer_1.png','newwindow', 
@@ -94,7 +106,7 @@
 							<div class="cell">
 								<div style="font-family: Poppins-Bold;">{{ results['customer'][year][1][0] }}</div>
                                 <br>
-                                {{ (results['customer'][year][1][1]/10000000)|round(2) }} Cr
+                                {{ (results['customer'][year][1][1])|round(2) }} %
                                 <a href="" 
                                 style="font-size:12px;" 
 								onclick="window.open('/top_contribution/{{ year }}_customer_2.png','newwindow', 
@@ -106,7 +118,7 @@
                             <div class="cell">
 								<div style="font-family: Poppins-Bold;">{{ results['customer'][year][2][0] }}</div>
                                 <br>
-                                {{ (results['customer'][year][2][1]/10000000)|round(2) }} Cr
+                                {{ (results['customer'][year][2][1])|round(2) }} %
                                 <a href="" 
                                 style="font-size:12px;" 
 								onclick="window.open('/top_contribution/{{ year }}_customer_3.png','newwindow', 
@@ -133,12 +145,18 @@
                         
                         <div class="row">
 							<div class="cell" style="font-family: Poppins-Bold;">
-                                {{ year }} &nbsp;
+                                {{ year }} <br>
+                                <a href="" style="font-size:12px;" 
+                                onclick="window.open('/top_contribution/{{ year }}_sku_0.png','newwindow', 
+                                'width=700,height=550'); 
+                                return false;">
+                                <span class="glyphicon glyphicon-stats"></span>
+                                </a>
 							</div>
 							<div class="cell">
                                 <div style="font-family: Poppins-Bold;">{{ results['sku'][year][0][0] }}</div>
                                 <br>
-                                {{ (results['sku'][year][0][1]/10000000)|round(2) }} Cr
+                                {{ (results['sku'][year][0][1])|round(2) }} %
                                 <a href="" 
                                 style="font-size:12px;" 
 								onclick="window.open('/top_contribution/{{ year }}_sku_1.png','newwindow', 
@@ -150,7 +168,7 @@
 							<div class="cell">
 								<div style="font-family: Poppins-Bold;">{{ results['sku'][year][1][0] }}</div>
                                 <br>
-                                {{ (results['sku'][year][1][1]/10000000)|round(2) }} Cr
+                                {{ (results['sku'][year][1][1])|round(2) }} %
                                 <a href="" 
                                 style="font-size:12px;" 
 								onclick="window.open('/top_contribution/{{ year }}_sku_1.png','newwindow', 
@@ -162,7 +180,7 @@
                             <div class="cell">
 								<div style="font-family: Poppins-Bold;">{{ results['sku'][year][2][0] }}</div>
                                 <br>
-                                {{ (results['sku'][year][2][1]/10000000)|round(2) }} Cr
+                                {{ (results['sku'][year][2][1])|round(2) }} %
                                 <a href="" 
                                 style="font-size:12px;" 
 								onclick="window.open('/top_contribution/{{ year }}_sku_1.png','newwindow', 

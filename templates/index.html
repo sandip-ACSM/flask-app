@@ -64,7 +64,9 @@
 								<a href="" style="font-size:12px;" 
 								onclick="window.open('/cust_num.png','newwindow', 
                          		'width=700,height=550'); 
-              					return false;">Details</a>
+								  return false;">
+								  <span class="glyphicon glyphicon-stats"></span>
+								</a>
 							</div>
 						</div>
 						<div class="row">
@@ -78,7 +80,9 @@
 								<a href="" style="font-size:12px;" 
 								onclick="window.open('/sale.png','newwindow', 
                          		'width=700,height=550'); 
-              					return false;">Details</a>
+								  return false;">
+								  <span class="glyphicon glyphicon-stats"></span>
+								</a>
 							</div>
 						</div>
 						<div class="row">
@@ -90,9 +94,27 @@
 							</div>
 							<div class="cell">
 								<a href="" style="font-size:12px;" 
-								onclick="window.open('/avg_invoice.png','newwindow', 
+								onclick="window.open('/avg_invoice_num.png','newwindow', 
                          		'width=700,height=550'); 
-              					return false;">Details</a>
+								  return false;">
+								  <span class="glyphicon glyphicon-stats"></span>
+								</a>
+							</div>
+						</div>
+						<div class="row">
+							<div class="cell" style="font-family: Poppins-Bold;">
+								Average invoices value
+							</div>
+							<div class="cell">
+								{{ results[4] }} 
+							</div>
+							<div class="cell">
+								<a href="" style="font-size:12px;" 
+								onclick="window.open('/avg_invoice_val.png','newwindow', 
+                         		'width=700,height=550'); 
+								  return false;">
+								  <span class="glyphicon glyphicon-stats"></span>
+								</a>
 							</div>
 						</div>
 						<div class="row">
@@ -100,13 +122,15 @@
 								Month-end skew
 							</div>
 							<div class="cell">
-								{{ results[4] }} %
+								{{ results[5] }} %
 							</div>
 							<div class="cell">
 								<a href="" style="font-size:12px;" 
 								onclick="window.open('/skew.png','newwindow', 
                          		'width=700,height=550'); 
-              					return false;">Details</a>
+								  return false;">
+								  <span class="glyphicon glyphicon-stats"></span>
+								</a>
 							</div>
 						</div>
 

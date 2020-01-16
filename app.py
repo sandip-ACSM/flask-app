@@ -279,8 +279,40 @@ def top_contribution_plot_graph(graph_name):
 
 @app.route("/cagr", methods=['GET', 'POST'])
 def cagr():
-	return render_template('cagr.html', params=params)
+	cagr_result = {}
+	overall_query = '''
+	select time_bucket, sale_val from company_profile where time_bucket_type='month';
+	'''
+	overall_df = pd.read_sql(overall_query, db)
+	cagr_result['overall'] = calculate_cagr(overall_df)
 
+	territory_query = '''
+	select territory_name, time_bucket, sale_val from territory_profile where 
+	time_bucket_type='month';
+	'''
+	territory_df = pd.read_sql(territory_query, db)
+	territory_list = territory_df['territory_name'].drop_duplicates(keep='first').tolist()
+	for territory in territory_list:
+		df = territory_df.loc[territory_df['territory_name']==territory,:]
+		cagr_result[territory] = calculate_cagr(df)
+	cagr_result = {k: v for k, v in sorted(cagr_result.items(), \
+						key=lambda item: item[1], reverse=True)}
+	global_data['cagr'] = cagr_result
+	territory_list_sorted = list(cagr_result.keys())
+	territory_list_sorted.remove('overall')
+	return render_template('cagr.html', params=params, cagr_result=cagr_result, 
+							territory_list=territory_list_sorted)
+
+@app.route("/cagr/plot.png", methods=['GET'])
+def cagr_plot():
+	x,y = list(global_data['cagr'].keys()), list(global_data['cagr'].values())
+	xlabel, ylabel = 'Territory', 'CAGR (%)'
+	title = f'Territory-wise CAGR (%)'
+	fig = create_bar_plot(x, y, xlabel, ylabel, title, ylimit=(26, 29),\
+							width= 0.5, rotation=30, text_offset=0.05)
+	output = io.BytesIO()
+	FigureCanvas(fig).print_png(output)
+	return Response(output.getvalue(), mimetype='image/png')
 
 @app.route("/top_growing_sales", methods=['GET', 'POST'])
 def hotop_growing_salesme():
@@ -355,6 +387,21 @@ def create_pie_plot(x, y, explode, title):
 	ax.axis('equal')
 	plt.title(title, fontsize=17)
 	return fig
+
+
+def calculate_cagr(df):
+	df['year'] = df.apply(lambda x: int(x['time_bucket'][:4]), axis=1)
+	df['month'] = df.apply(lambda x: int(x['time_bucket'][5:]), axis=1)
+	df.sort_values(by=['year','month'], inplace=True)
+	L = len(df)
+	remainder = L%6
+	num_six_months = math.floor(L/6)
+	df1 = df[:-remainder]
+	first_six_months_sale = sum(df1['sale_val'].tolist()[:6])
+	last_six_months_sale = sum(df1['sale_val'].tolist()[-6:])
+
+	cagr = (last_six_months_sale/first_six_months_sale)**(1/(0.5*num_six_months))-1
+	return round(cagr*100,2)
 
 
 if __name__ == '__main__':

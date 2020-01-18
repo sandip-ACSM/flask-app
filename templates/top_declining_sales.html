@@ -1,4 +1,92 @@
 {% extends "layout.html" %}
 {% block body %}
-<h1 class="text-center">Top Declining Sales</h1>
+	<!-- Page content -->
+	<div class="main">
+		<div class="limiter">
+			<div class="container-table100">
+				<div class="wrap-table100">
+                    <h1 class="text-center">Top Declining Sales</h1><br>
+					<div class="table">
+						<div class="row header">
+                            <div class="cell" style="font-size: 16px;">Top declining<br>
+                                (Lowest CAGR) </div>
+							<div class="cell" style="font-size: 16px;">Rank 1</div>
+							<div class="cell" style="font-size: 16px;">Rank 2</div>
+							<div class="cell" style="font-size: 16px;">Rank 3</div>
+                        </div>
+
+                        <div class="row">
+							<div class="cell">
+                                <div style="font-family: Poppins-Bold;"> Territory-wise &nbsp;&nbsp;
+                                    <span class="glyphicon glyphicon-arrow-right"></span>
+                                </div>
+                            </div>
+							<div class="cell">
+                                <div style="font-family: Poppins-Bold;">
+                                    {{ results['territory'][0][0] }}</div>
+                                <br><div>{{ results['territory'][0][1] }} %</div>
+							</div>
+							<div class="cell">
+                                <div style="font-family: Poppins-Bold;">
+                                    {{ results['territory'][1][0] }}</div>
+                                <br><div>{{ results['territory'][1][1] }} %</div>
+                            </div>
+                            <div class="cell">
+                                <div style="font-family: Poppins-Bold;">
+                                    {{ results['territory'][2][0] }}</div>
+                                <br><div>{{ results['territory'][2][1] }} %</div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+							<div class="cell">
+                                <div style="font-family: Poppins-Bold;"> Customer-wise &nbsp;&nbsp;
+                                    <span class="glyphicon glyphicon-arrow-right"></span>
+                                </div>
+                            </div>
+							<div class="cell">
+                                <div style="font-family: Poppins-Bold;">
+                                    {{ results['customer'][0][0] }}</div>
+                                <br><div>{{ results['customer'][0][1] }} %</div>
+							</div>
+							<div class="cell">
+                                <div style="font-family: Poppins-Bold;">
+                                    {{ results['customer'][1][0] }}</div>
+                                <br><div>{{ results['customer'][1][1] }} %</div>
+                            </div>
+                            <div class="cell">
+                                <div style="font-family: Poppins-Bold;">
+                                    {{ results['customer'][2][0] }}</div>
+                                <br><div>{{ results['customer'][2][1] }} %</div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+							<div class="cell">
+                                <div style="font-family: Poppins-Bold;"> SKU-wise &nbsp;&nbsp;
+                                    <span class="glyphicon glyphicon-arrow-right"></span>
+                                </div>
+                            </div>
+							<div class="cell">
+                                <div style="font-family: Poppins-Bold;">
+                                    {{ results['sku'][0][0] }}</div>
+                                <br><div>{{ results['sku'][0][1] }} %</div>
+							</div>
+							<div class="cell">
+                                <div style="font-family: Poppins-Bold;">
+                                    {{ results['sku'][1][0] }}</div>
+                                <br><div>{{ results['sku'][1][1] }} %</div>
+                            </div>
+                            <div class="cell">
+                                <div style="font-family: Poppins-Bold;">
+                                    {{ results['sku'][2][0] }}</div>
+                                <br><div>{{ results['sku'][2][1] }} %</div>
+                            </div>
+                        </div>
+
+                    </div>
+				</div>
+			</div>
+		</div>
+	</div>
 {% endblock %}

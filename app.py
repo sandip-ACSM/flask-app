@@ -12,7 +12,7 @@ import random
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
-
+import itertools
 
 with open('config.json', 'r') as c:
 	params = json.load(c)["params"]
@@ -54,7 +54,8 @@ def home():
 		cursor.execute(query)
 		results = cursor.fetchall()[0]
 		params['year'] = time_bucket_type
-	return render_template('index.html', params=params, results=results)
+	return render_template('index.html', params=params, results=results, 
+							year_list=global_data['year_list'])
 
 
 @app.route("/<string:graph_name>.png", methods=['GET'])
@@ -85,7 +86,7 @@ def home_plot_graph(graph_name):
 		y = [round(a/10000000,2) for a in y]
 		xlabel, ylabel = 'Territory', 'Sales (Crores)'
 		title = 'Territory-wise sales in Crores'
-		fig = create_bar_plot(x, y, xlabel, ylabel, title,ylimit=(5, 14),\
+		fig = create_bar_plot(x, y, xlabel, ylabel, title,ylimit=(4, 13),\
 							  width=0.5, rotation=30, text_offset=0.05)
 		output = io.BytesIO()
 		FigureCanvas(fig).print_png(output)
@@ -172,6 +173,28 @@ def seasonality_plot_graph(graph_name):
 	title = 'Month-wise plot (APR, {} - MAR, {})'.format(graph_name, int(graph_name)+1)
 	fig = create_line_plot(x, y, xlabel, ylabel,'bD--',title,\
 						   text_offset=0.3)
+	output = io.BytesIO()
+	FigureCanvas(fig).print_png(output)
+	return Response(output.getvalue(), mimetype='image/png')
+
+
+@app.route("/seasonality/plot.png", methods=['GET'])
+def seasonality_plot_graph2():
+	x_dict, y_dict = {}, {}
+	for year in global_data['year_list']:
+		monthly_sales_dict = global_data['seasonality'][year]
+		x,y = list(monthly_sales_dict.keys()),list(monthly_sales_dict.values())
+		x = [int(a) for a in x]
+		y = [a for _,a in sorted(zip(x,y))]
+		# x.sort()
+		x = ['APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', \
+			'DEC', 'JAN', 'FEB', 'MAR']
+		x = x[:len(y)]
+		x_dict[year], y_dict[year] = x, y
+	xlabel, ylabel = 'Month', 'Sales (Crores)'
+	title = 'Month-wise plot (APR to MAR)'
+	fig = create_multiple_line_plot(x_dict, y_dict, xlabel, ylabel,['bD--','rv--','go--'],\
+						   global_data['year_list'], title, text_offset=0.3)
 	output = io.BytesIO()
 	FigureCanvas(fig).print_png(output)
 	return Response(output.getvalue(), mimetype='image/png')
@@ -315,18 +338,32 @@ def cagr_plot():
 	return Response(output.getvalue(), mimetype='image/png')
 
 @app.route("/top_growing_sales", methods=['GET', 'POST'])
-def hotop_growing_salesme():
-	return render_template('top_growing_sales.html', params=params)
-
-
-@app.route("/top_steady_sales", methods=['GET', 'POST'])
-def top_steady_sales():
-	return render_template('top_steady_sales.html', params=params)
+def top_growing_sales():
+	results = {}
+	results['territory'] = get_entity_wise_top_3_cagr('territory', reverse=True)
+	results['customer'] = get_entity_wise_top_3_cagr('customer', reverse=True)
+	results['sku'] = get_entity_wise_top_3_cagr('sku', reverse=True)
+	return render_template('top_growing_sales.html', params=params, results=results)
 
 
 @app.route("/top_declining_sales", methods=['GET', 'POST'])
 def top_declining_sales():
-	return render_template('top_declining_sales.html', params=params)
+	results = {}
+	results['territory'] = get_entity_wise_top_3_cagr('territory', reverse=False)
+	results['customer'] = get_entity_wise_top_3_cagr('customer', reverse=False)
+	results['sku'] = get_entity_wise_top_3_cagr('sku', reverse=False)
+	return render_template('top_declining_sales.html', params=params, results=results)
+
+
+@app.route("/most_steady_sale", methods=['GET', 'POST'])
+def most_steady_sales():
+	results = {
+		'territory': [[],[],[]],
+		'customer': [[],[],[]],
+		'sku': [[],[],[]]
+	}
+	return render_template('most_steady_sales.html', params=params, results=results, 
+							year_list=global_data['year_list'])
 
 
 def create_bar_plot(x, y, xlabel, ylabel, title, ylimit=(),\
@@ -363,9 +400,39 @@ def create_line_plot(x, y, xlabel, ylabel, linetype, title,
 	plt.title(title, fontsize=15)
 	plt.grid(linestyle = '--', linewidth = 0.2, color = 'k')
 	plt.xticks(range(len(x)), x, fontsize=14, rotation=rotation); 
-	plt.yticks(fontsize=14)
+	plt.yticks(fontsize=15)
 	for i, j in enumerate(y):
 		ax.text(i, j+text_offset, j, fontsize=15, ha='center')
+	if len(xlimit) !=0:
+		plt.xlim(xlimit[0], xlimit[1])
+	if len(ylimit) !=0:
+		plt.ylim(ylimit[0], ylimit[1])
+	plt.tight_layout()
+	ax.spines['top'].set_visible(False)
+	ax.spines['right'].set_visible(False)
+	ax.spines['bottom'].set_visible(False)
+	ax.spines['left'].set_visible(False)
+	return fig
+
+
+def create_multiple_line_plot(x_dict, y_dict, xlabel, ylabel, linetype_list, label_list, \
+							  title, xlimit=(), ylimit=(), rotation=0, text_offset=0):
+	fig = plt.figure(figsize=(12,8), dpi=100)
+	ax = fig.add_subplot(111)
+	for ind, (label, linetype) in enumerate(zip(label_list, linetype_list)):
+		x, y = x_dict[label], y_dict[label]
+		plt.plot(range(len(x)), y, linetype, label=label, linewidth = 1.5)
+		if ind == 0:
+			plt.xticks(range(len(x)), x, fontsize=14, rotation=rotation)
+		for i, j in enumerate(y):
+			ax.text(i, j+text_offset, j, fontsize=15, ha='center',color = linetype[0])
+	plt.xlabel(xlabel, fontsize=14)
+	plt.ylabel(ylabel, fontsize=14)
+	plt.title(title, fontsize=15)
+	plt.grid(linestyle = '--', linewidth = 0.2, color = 'k')
+	plt.yticks(fontsize=14)
+	plt.legend(loc='best', fontsize=14)
+	
 	if len(xlimit) !=0:
 		plt.xlim(xlimit[0], xlimit[1])
 	if len(ylimit) !=0:
@@ -402,6 +469,20 @@ def calculate_cagr(df):
 
 	cagr = (last_six_months_sale/first_six_months_sale)**(1/(0.5*num_six_months))-1
 	return round(cagr*100,2)
+
+def get_entity_wise_top_3_cagr(entity_type, reverse=True):
+	entity_dict = {}
+	entity_query = '''
+	select {}_name, time_bucket, sale_val from {}_profile where 
+	time_bucket_type='month';'''.format(entity_type, entity_type)
+	entity_df = pd.read_sql(entity_query, db)
+	entity_list = entity_df[f'{entity_type}_name'].drop_duplicates(keep='first').tolist()
+	for entity_name in entity_list:
+		df = entity_df.loc[entity_df[f'{entity_type}_name']==entity_name,:]
+		entity_dict[entity_name] = calculate_cagr(df)
+	entity_dict_sorted = {k: v for k, v in sorted(entity_dict.items(), \
+							key=lambda item: item[1], reverse=reverse)}
+	return list(entity_dict_sorted.items())[:3]
 
 
 if __name__ == '__main__':

@@ -21,7 +21,7 @@
                         
                         <div class="row">
 							<div class="cell" style="font-family: Poppins-Bold;">
-                                {{ year }} <br>
+                                {{ year }} <br><br>
                                 <a href="" style="font-size:12px;" 
                                 onclick="window.open('/top_contribution/{{ year }}_territory_0.png','newwindow', 
                                 'width=700,height=550'); 
@@ -83,7 +83,7 @@
                         
                         <div class="row">
 							<div class="cell" style="font-family: Poppins-Bold;">
-                                {{ year }} <br>
+                                {{ year }} <br><br>
                                 <a href="" style="font-size:12px;" 
                                 onclick="window.open('/top_contribution/{{ year }}_customer_0.png','newwindow', 
                                 'width=700,height=550'); 
@@ -145,7 +145,7 @@
                         
                         <div class="row">
 							<div class="cell" style="font-family: Poppins-Bold;">
-                                {{ year }} <br>
+                                {{ year }} <br><br>
                                 <a href="" style="font-size:12px;" 
                                 onclick="window.open('/top_contribution/{{ year }}_sku_0.png','newwindow', 
                                 'width=700,height=550'); 
@@ -197,13 +197,4 @@
 			</div>
 		</div>
 	</div>
-
-	<script src="{{ url_for('static', filename='vendor/jquery/jquery-3.2.1.min.js') }}"></script>
-	<script>
-		$(document).ready(function(){
-			$("#yearinput").click(function(){
-				$("#yearselect").val();
-			});
-		});
-	</script>
 {% endblock %}

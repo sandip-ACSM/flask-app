@@ -5,9 +5,10 @@
 		<div class="limiter">
 			<div class="container-table100">
 				<div class="wrap-table100">
-                    <h1 class="text-center">Most Steady Sales</h1><br>
+                    <h1 class="text-center">Most Steady Sales </h1>
+                    <h3 class="text-center">(Year: {{current_year}})</h3>
 
-                    <form action="/" method="post" name="yearlist">
+                    <form action="/most_steady_sales" method="post" name="yearlist">
 						<select id="yearselect" name="year" class="cursor-pointer">
 							<option hidden disabled selected value>-- select year --</option>
                             {% for year in year_list %}
@@ -36,18 +37,18 @@
                             </div>
 							<div class="cell">
                                 <div style="font-family: Poppins-Bold;">
-                                    Territory_1</div>
-                                <br><div>{{ results['territory'][0][1] }} %</div>
+                                    {{ results['territory'][0][0] }}</div>
+                                <br><div>{{ results['territory'][0][1] }}</div>
 							</div>
 							<div class="cell">
                                 <div style="font-family: Poppins-Bold;">
-                                    Territory_2</div>
-                                <br><div>{{ results['territory'][1][1] }} %</div>
+                                    {{ results['territory'][1][0] }}</div>
+                                <br><div>{{ results['territory'][1][1] }}</div>
                             </div>
                             <div class="cell">
                                 <div style="font-family: Poppins-Bold;">
-                                    Territory_3</div>
-                                <br><div>{{ results['territory'][2][1] }} %</div>
+                                    {{ results['territory'][2][0] }}</div>
+                                <br><div>{{ results['territory'][2][1] }}</div>
                             </div>
                         </div>
 
@@ -59,18 +60,18 @@
                             </div>
 							<div class="cell">
                                 <div style="font-family: Poppins-Bold;">
-                                    Customer_1</div>
-                                <br><div>{{ results['customer'][0][1] }} %</div>
+                                    {{ results['customer'][0][0] }}</div>
+                                <br><div>{{ results['customer'][0][1] }}</div>
 							</div>
 							<div class="cell">
                                 <div style="font-family: Poppins-Bold;">
-                                    Customer_2</div>
-                                <br><div>{{ results['customer'][1][1] }} %</div>
+                                    {{ results['customer'][1][0] }}</div>
+                                <br><div>{{ results['customer'][1][1] }}</div>
                             </div>
                             <div class="cell">
                                 <div style="font-family: Poppins-Bold;">
-                                    Customer_3</div>
-                                <br><div>{{ results['customer'][2][1] }} %</div>
+                                    {{ results['customer'][2][0] }}</div>
+                                <br><div>{{ results['customer'][2][1] }}</div>
                             </div>
                         </div>
 
@@ -82,18 +83,18 @@
                             </div>
 							<div class="cell">
                                 <div style="font-family: Poppins-Bold;">
-                                    SKU_1</div>
-                                <br><div>{{ results['sku'][0][1] }} %</div>
+                                    {{ results['sku'][0][0] }}</div>
+                                <br><div>{{ results['sku'][0][1] }}</div>
 							</div>
 							<div class="cell">
                                 <div style="font-family: Poppins-Bold;">
-                                    SKU_2</div>
-                                <br><div>{{ results['sku'][1][1] }} %</div>
+                                    {{ results['sku'][1][0] }}</div>
+                                <br><div>{{ results['sku'][1][1] }}</div>
                             </div>
                             <div class="cell">
                                 <div style="font-family: Poppins-Bold;">
-                                    SKU_3</div>
-                                <br><div>{{ results['sku'][2][1] }} %</div>
+                                    {{ results['sku'][2][0] }}</div>
+                                <br><div>{{ results['sku'][2][1] }}</div>
                             </div>
                         </div>
 

@@ -39,32 +39,37 @@ global_data['year_list'] = list(zip(*year_list_results))[0]
 
 @app.route("/", methods=['GET', 'POST'])
 def home():
+	results = ['--']*6
 	cursor = db.cursor() 
 	query = '''SELECT num_territories, num_customers, sale_val, 
 	avg_num_invoice_per_month, avg_invoice_val, month_end_skew FROM 
 	company_profile where time_bucket='2017';'''
 	cursor.execute(query)
-	results = cursor.fetchall()[0]
-	params['year'] = 2017
+	# results = cursor.fetchall()[0]
+	current_year = '----'
 	if request.method=='POST':
 		time_bucket_type = request.form['year']
 		query = '''SELECT num_territories, num_customers, sale_val, 
 		avg_num_invoice_per_month, avg_invoice_val, month_end_skew FROM 
 		company_profile where time_bucket='{}';'''.format(time_bucket_type)
 		cursor.execute(query)
-		results = cursor.fetchall()[0]
-		params['year'] = time_bucket_type
+		results = list(cursor.fetchall()[0])
+		results[2] = str(round(results[2]/10000000,2))+' Cr'
+		results[-1] = str(results[-1])+' %'
+
+		current_year = time_bucket_type
 	return render_template('index.html', params=params, results=results, 
-							year_list=global_data['year_list'])
+				year_list=global_data['year_list'], current_year=current_year)
 
 
 @app.route("/<string:graph_name>.png", methods=['GET'])
 def home_plot_graph(graph_name):
 	cursor = db.cursor()
-	if graph_name == 'cust_num':
+	current_year = graph_name[-4:]
+	if graph_name[:-5] == 'cust_num':
 		query = '''SELECT territory_name, num_customers FROM territory_profile 
 		where time_bucket='{}' and time_bucket_type='year' order by num_customers desc;
-		'''.format(params['year'])
+		'''.format(current_year)
 		cursor.execute(query)
 		results = cursor.fetchall()
 		[x,y] = list(zip(*results))
@@ -76,10 +81,10 @@ def home_plot_graph(graph_name):
 		FigureCanvas(fig).print_png(output)
 		return Response(output.getvalue(), mimetype='image/png')
 
-	elif graph_name == 'sale':
+	elif graph_name[:-5] == 'sale':
 		query = '''SELECT territory_name, sale_val FROM territory_profile 
 		where time_bucket='{}' and time_bucket_type='year' order by sale_val desc;
-		'''.format(params['year'])
+		'''.format(current_year)
 		cursor.execute(query)
 		results = cursor.fetchall()
 		[x,y] = list(zip(*results))
@@ -92,10 +97,10 @@ def home_plot_graph(graph_name):
 		FigureCanvas(fig).print_png(output)
 		return Response(output.getvalue(), mimetype='image/png')
 
-	elif graph_name == 'avg_invoice_num': 
+	elif graph_name[:-5] == 'avg_invoice_num': 
 		query = '''SELECT territory_name, avg_num_invoice_per_month FROM territory_profile 
 		where time_bucket='{}' and time_bucket_type='year' order by avg_num_invoice_per_month desc;
-		'''.format(params['year'])
+		'''.format(current_year)
 		cursor.execute(query)
 		results = cursor.fetchall()
 		[x,y] = list(zip(*results))
@@ -108,10 +113,10 @@ def home_plot_graph(graph_name):
 		return Response(output.getvalue(), mimetype='image/png')
 
 
-	elif graph_name == 'avg_invoice_val': 
+	elif graph_name[:-5] == 'avg_invoice_val': 
 		query = '''SELECT territory_name, avg_invoice_val FROM territory_profile 
 		where time_bucket='{}' and time_bucket_type='year' order by avg_invoice_val desc;
-		'''.format(params['year'])
+		'''.format(current_year)
 		cursor.execute(query)
 		results = cursor.fetchall()
 		[x,y] = list(zip(*results))
@@ -123,10 +128,10 @@ def home_plot_graph(graph_name):
 		FigureCanvas(fig).print_png(output)
 		return Response(output.getvalue(), mimetype='image/png')
 
-	elif graph_name == 'skew': 
+	elif graph_name[:-5] == 'skew': 
 		query = '''SELECT territory_name, month_end_skew FROM territory_profile 
 		where time_bucket='{}' and time_bucket_type='year' order by month_end_skew desc;
-		'''.format(params['year'])
+		'''.format(current_year)
 		cursor.execute(query)
 		results = cursor.fetchall()
 		[x,y] = list(zip(*results))
@@ -355,15 +360,21 @@ def top_declining_sales():
 	return render_template('top_declining_sales.html', params=params, results=results)
 
 
-@app.route("/most_steady_sale", methods=['GET', 'POST'])
+@app.route("/most_steady_sales", methods=['GET', 'POST'])
 def most_steady_sales():
-	results = {
-		'territory': [[],[],[]],
-		'customer': [[],[],[]],
-		'sku': [[],[],[]]
+	steady_sales_results = {
+		'territory': [['--','--'],['--','--'], ['--','--']],
+		'customer': [['--','--'],['--','--'], ['--','--']],
+		'sku': [['--','--'],['--','--'], ['--','--']],
 	}
-	return render_template('most_steady_sales.html', params=params, results=results, 
-							year_list=global_data['year_list'])
+	current_year = '----'
+	if request.method=='POST':
+		current_year = request.form['year']
+		steady_sales_results['territory'] = get_entity_wise_most_3_steady_sales('territory')[current_year]
+		steady_sales_results['customer'] = get_entity_wise_most_3_steady_sales('customer')[current_year]
+		steady_sales_results['sku'] = get_entity_wise_most_3_steady_sales('sku')[current_year]
+	return render_template('most_steady_sales.html', params=params, results=steady_sales_results, 
+							year_list=global_data['year_list'], current_year=current_year)
 
 
 def create_bar_plot(x, y, xlabel, ylabel, title, ylimit=(),\
@@ -483,6 +494,23 @@ def get_entity_wise_top_3_cagr(entity_type, reverse=True):
 	entity_dict_sorted = {k: v for k, v in sorted(entity_dict.items(), \
 							key=lambda item: item[1], reverse=reverse)}
 	return list(entity_dict_sorted.items())[:3]
+
+
+def get_entity_wise_most_3_steady_sales(entity_type):
+	entity_dict = {}
+	for year in global_data['year_list']:
+		entity_dict[year] = []
+		entity_query = '''
+		select {}_name, sd_num_invoice_per_month from {}_profile where 
+		time_bucket='{}' order by sd_num_invoice_per_month limit 3;
+		'''.format(entity_type, entity_type, year)
+		entity_df = pd.read_sql(entity_query, db)
+		entity_list = entity_df[f'{entity_type}_name'].drop_duplicates(keep='first').tolist()
+		for entity_name in entity_list:
+			sd_value = entity_df.loc[entity_df['{}_name'.format(entity_type)]==entity_name,\
+									'sd_num_invoice_per_month'].values[0]
+			entity_dict[year].append([entity_name, sd_value])
+	return entity_dict
 
 
 if __name__ == '__main__':

@@ -1,31 +1,32 @@
-from flask import Flask, render_template, request, session, redirect, Response
-from flask_sqlalchemy import SQLAlchemy
-from werkzeug import secure_filename
-import json
 import os
+import io
 import math
+import json
 from datetime import datetime
 import pymysql
 import pandas as pd
-import io
 import random
+from flask import Flask, render_template, request, session, redirect, Response
+from flask_sqlalchemy import SQLAlchemy
+from werkzeug import secure_filename
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 import itertools
+from configparser import ConfigParser
 
-with open('config.json', 'r') as c:
-	params = json.load(c)["params"]
-global_data = {}
+config = ConfigParser()
+config.read('config.ini')
+
+host  = config['database']['endpoint']
+username = config['database']['username']
+password = config['database']['password']
+db_name = config['database']['db_name']
+
 
 app = Flask(__name__)
-# app.secret_key = '1253246754467'
-app.config['UPLOAD_FOLDER'] = params['upload_location']
-# app.config['SQLALCHEMY_DATABASE_URI'] = params['database_uri']
-# db = SQLAlchemy(app)
-
-db = pymysql.connect(params["endpoint"], params["username"], \
-					 params["password"], params["db_name"])
+global_data = {}
+db = pymysql.connect(host, username, password, db_name)
 
 year_list_query = '''
 	select distinct time_bucket from company_profile where time_bucket_type='year' 
@@ -58,7 +59,7 @@ def home():
 		results[-1] = str(results[-1])+' %'
 
 		current_year = time_bucket_type
-	return render_template('index.html', params=params, results=results, 
+	return render_template('index.html', results=results, 
 				year_list=global_data['year_list'], current_year=current_year)
 
 
@@ -160,7 +161,7 @@ def seasonality():
 			if x[:4] == str(year):
 				results[year][x[5:]] = round(y/10000000,2)
 	global_data['seasonality'] = results
-	return render_template('seasonality.html', params=params, results=results,\
+	return render_template('seasonality.html', results=results,\
 							year_list=global_data['year_list'])
 
 
@@ -240,7 +241,7 @@ def top_contribution():
 		
 	global_data['top_contribution'] = results
 	# print(global_data['top_contribution'])
-	return render_template('top_contribution.html', params=params, results=results,\
+	return render_template('top_contribution.html', results=results,\
 							year_list=global_data['year_list'])
 
 
@@ -328,7 +329,7 @@ def cagr():
 	global_data['cagr'] = cagr_result
 	territory_list_sorted = list(cagr_result.keys())
 	territory_list_sorted.remove('overall')
-	return render_template('cagr.html', params=params, cagr_result=cagr_result, 
+	return render_template('cagr.html', cagr_result=cagr_result, 
 							territory_list=territory_list_sorted)
 
 @app.route("/cagr/plot.png", methods=['GET'])
@@ -348,16 +349,16 @@ def top_growing_sales():
 	results['territory'] = get_entity_wise_top_3_cagr('territory', reverse=True)
 	results['customer'] = get_entity_wise_top_3_cagr('customer', reverse=True)
 	results['sku'] = get_entity_wise_top_3_cagr('sku', reverse=True)
-	return render_template('top_growing_sales.html', params=params, results=results)
+	return render_template('top_growing_sales.html', results=results)
 
 
-@app.route("/top_declining_sales", methods=['GET', 'POST'])
+@app.route("/slowest_growing_sales", methods=['GET', 'POST'])
 def top_declining_sales():
 	results = {}
 	results['territory'] = get_entity_wise_top_3_cagr('territory', reverse=False)
 	results['customer'] = get_entity_wise_top_3_cagr('customer', reverse=False)
 	results['sku'] = get_entity_wise_top_3_cagr('sku', reverse=False)
-	return render_template('top_declining_sales.html', params=params, results=results)
+	return render_template('slowest_growing_sales.html', results=results)
 
 
 @app.route("/most_steady_sales", methods=['GET', 'POST'])
@@ -373,7 +374,7 @@ def most_steady_sales():
 		steady_sales_results['territory'] = get_entity_wise_most_3_steady_sales('territory')[current_year]
 		steady_sales_results['customer'] = get_entity_wise_most_3_steady_sales('customer')[current_year]
 		steady_sales_results['sku'] = get_entity_wise_most_3_steady_sales('sku')[current_year]
-	return render_template('most_steady_sales.html', params=params, results=steady_sales_results, 
+	return render_template('most_steady_sales.html', results=steady_sales_results, 
 							year_list=global_data['year_list'], current_year=current_year)
 
 

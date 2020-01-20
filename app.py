@@ -42,23 +42,21 @@ global_data['year_list'] = list(zip(*year_list_results))[0]
 def home():
 	results = ['--']*6
 	cursor = db.cursor() 
+	current_year = global_data['year_list'][-1]
 	query = '''SELECT num_territories, num_customers, sale_val, 
-	avg_num_invoice_per_month, avg_invoice_val, month_end_skew FROM 
-	company_profile where time_bucket='2017';'''
+		avg_num_invoice_per_month, avg_invoice_val, month_end_skew FROM 
+		company_profile where time_bucket='{}';'''.format(current_year)
 	cursor.execute(query)
 	# results = cursor.fetchall()[0]
-	current_year = '----'
 	if request.method=='POST':
-		time_bucket_type = request.form['year']
+		current_year = request.form['year']
 		query = '''SELECT num_territories, num_customers, sale_val, 
 		avg_num_invoice_per_month, avg_invoice_val, month_end_skew FROM 
-		company_profile where time_bucket='{}';'''.format(time_bucket_type)
+		company_profile where time_bucket='{}';'''.format(current_year)
 		cursor.execute(query)
-		results = list(cursor.fetchall()[0])
-		results[2] = str(round(results[2]/10000000,2))+' Cr'
-		results[-1] = str(results[-1])+' %'
-
-		current_year = time_bucket_type
+	results = list(cursor.fetchall()[0])
+	results[2] = str(round(results[2]/10000000,2))+' Cr'
+	results[-1] = str(results[-1])+' %'
 	return render_template('index.html', results=results, 
 				year_list=global_data['year_list'], current_year=current_year)
 
@@ -138,7 +136,7 @@ def home_plot_graph(graph_name):
 		[x,y] = list(zip(*results))
 		xlabel, ylabel = 'Territory', 'Month end skew (%)'
 		title = 'Territory-wise month end skew in %'
-		fig = create_bar_plot(x, y, xlabel, ylabel, title,ylimit=(40, 46),\
+		fig = create_bar_plot(x, y, xlabel, ylabel, title,ylimit=(30, 46),\
 							  width=0.5, rotation=30, text_offset=0.1)
 		output = io.BytesIO()
 		FigureCanvas(fig).print_png(output)

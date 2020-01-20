@@ -11,25 +11,26 @@
                     <br>
 					<div class="table">
 						<div class="row header">
-                            <div class="cell" style="font-size: 16px;">Year</div>
-							<div class="cell" style="font-size: 16px;">Rank 1</div>
-							<div class="cell" style="font-size: 16px;">Rank 2</div>
-							<div class="cell" style="font-size: 16px;">Rank 3</div>
-                        </div>
-
-                        {% for year in year_list %}
-                        
-                        <div class="row">
-							<div class="cell" style="font-family: Poppins-Bold;">
-                                {{ year }} <br><br>
+                            <div class="cell" style="font-size: 16px;">Year &nbsp;&nbsp;
+                                <span class="glyphicon glyphicon-arrow-right"></span>
+                            </div>
+                            {% for year in year_list %}
+                            <div class="cell" style="font-size: 16px;">{{year}} &nbsp;&nbsp;
                                 <a href="" style="font-size:12px;" 
                                 onclick="window.open('/top_contribution/{{ year }}_territory_0.png','newwindow', 
                                 'width=700,height=550'); 
                                 return false;">
-                                <span class="glyphicon glyphicon-stats"></span>
+                                <span class="glyphicon glyphicon-stats white"></span>
                                 </a>
-							</div>
-							<div class="cell">
+                            </div>
+                            {% endfor %}
+                        </div>                        
+                        <div class="row">
+							<div class="cell" style="font-family: Poppins-Bold;">
+                                Rank 1 <br><br>
+                            </div>
+                            {% for year in year_list %}
+                            <div class="cell">
                                 <div style="font-family: Poppins-Bold;">{{ results['territory'][year][0][0] }}</div>
                                 <br>
                                 {{ (results['territory'][year][0][1])|round(2) }} %
@@ -41,57 +42,75 @@
                                 <span class="glyphicon glyphicon-stats"></span>  
                                 </a>
 							</div>
-							<div class="cell">
-								<div style="font-family: Poppins-Bold;">{{ results['territory'][year][1][0] }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="row">
+							<div class="cell" style="font-family: Poppins-Bold;">
+                                Rank 2 <br><br>
+                            </div>
+                            {% for year in year_list %}
+                            <div class="cell">
+                                <div style="font-family: Poppins-Bold;">{{ results['territory'][year][1][0] }}</div>
                                 <br>
                                 {{ (results['territory'][year][1][1])|round(2) }} %
                                 <a href="" 
                                 style="font-size:12px;" 
-								onclick="window.open('/top_contribution/{{ year }}_territory_2.png','newwindow', 
+								onclick="window.open('/top_contribution/{{ year }}_territory_1.png','newwindow', 
                          		'width=700,height=550'); 
                                   return false;">
                                 <span class="glyphicon glyphicon-stats"></span>  
                                 </a>
+							</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="row">
+							<div class="cell" style="font-family: Poppins-Bold;">
+                                Rank 3 <br><br>
                             </div>
+                            {% for year in year_list %}
                             <div class="cell">
-								<div style="font-family: Poppins-Bold;">{{ results['territory'][year][2][0] }}</div>
+                                <div style="font-family: Poppins-Bold;">{{ results['territory'][year][2][0] }}</div>
                                 <br>
                                 {{ (results['territory'][year][2][1])|round(2) }} %
                                 <a href="" 
                                 style="font-size:12px;" 
-								onclick="window.open('/top_contribution/{{ year }}_territory_3.png','newwindow', 
+								onclick="window.open('/top_contribution/{{ year }}_territory_1.png','newwindow', 
                          		'width=700,height=550'); 
                                   return false;">
                                 <span class="glyphicon glyphicon-stats"></span>  
                                 </a>
-                            </div>
+							</div>
+                            {% endfor %}
                         </div>
-                        {% endfor %}
+
                     </div>
                     <br>
-                    <h3 class="text-center">Top 3 Customers</h3>
+                    <h3 class="text-center">Top 3 Customers (Overall)</h3>
                     <br>
                     <div class="table">
 						<div class="row header">
-                            <div class="cell" style="font-size: 16px;">Year</div>
-							<div class="cell" style="font-size: 16px;">Rank 1</div>
-							<div class="cell" style="font-size: 16px;">Rank 2</div>
-							<div class="cell" style="font-size: 16px;">Rank 3</div>
-                        </div>
-
-                        {% for year in year_list %}
-                        
-                        <div class="row">
-							<div class="cell" style="font-family: Poppins-Bold;">
-                                {{ year }} <br><br>
+                            <div class="cell" style="font-size: 16px;">Year &nbsp;&nbsp;
+                                <span class="glyphicon glyphicon-arrow-right"></span>
+                            </div>
+                            {% for year in year_list %}
+                            <div class="cell" style="font-size: 16px;">{{year}} &nbsp;&nbsp;
                                 <a href="" style="font-size:12px;" 
                                 onclick="window.open('/top_contribution/{{ year }}_customer_0.png','newwindow', 
                                 'width=700,height=550'); 
                                 return false;">
-                                <span class="glyphicon glyphicon-stats"></span>
+                                <span class="glyphicon glyphicon-stats white"></span>
                                 </a>
-							</div>
-							<div class="cell">
+                            </div>
+                            {% endfor %}
+                        </div>                        
+                        <div class="row">
+							<div class="cell" style="font-family: Poppins-Bold;">
+                                Rank 1 <br><br>
+                            </div>
+                            {% for year in year_list %}
+                            <div class="cell">
                                 <div style="font-family: Poppins-Bold;">{{ results['customer'][year][0][0] }}</div>
                                 <br>
                                 {{ (results['customer'][year][0][1])|round(2) }} %
@@ -103,57 +122,74 @@
                                 <span class="glyphicon glyphicon-stats"></span>  
                                 </a>
 							</div>
-							<div class="cell">
-								<div style="font-family: Poppins-Bold;">{{ results['customer'][year][1][0] }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="row">
+							<div class="cell" style="font-family: Poppins-Bold;">
+                                Rank 2 <br><br>
+                            </div>
+                            {% for year in year_list %}
+                            <div class="cell">
+                                <div style="font-family: Poppins-Bold;">{{ results['customer'][year][1][0] }}</div>
                                 <br>
                                 {{ (results['customer'][year][1][1])|round(2) }} %
                                 <a href="" 
                                 style="font-size:12px;" 
-								onclick="window.open('/top_contribution/{{ year }}_customer_2.png','newwindow', 
+								onclick="window.open('/top_contribution/{{ year }}_customer_1.png','newwindow', 
                          		'width=700,height=550'); 
                                   return false;">
                                 <span class="glyphicon glyphicon-stats"></span>  
                                 </a>
+							</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="row">
+							<div class="cell" style="font-family: Poppins-Bold;">
+                                Rank 3 <br><br>
                             </div>
+                            {% for year in year_list %}
                             <div class="cell">
-								<div style="font-family: Poppins-Bold;">{{ results['customer'][year][2][0] }}</div>
+                                <div style="font-family: Poppins-Bold;">{{ results['customer'][year][2][0] }}</div>
                                 <br>
                                 {{ (results['customer'][year][2][1])|round(2) }} %
                                 <a href="" 
                                 style="font-size:12px;" 
-								onclick="window.open('/top_contribution/{{ year }}_customer_3.png','newwindow', 
+								onclick="window.open('/top_contribution/{{ year }}_customer_1.png','newwindow', 
                          		'width=700,height=550'); 
                                   return false;">
                                 <span class="glyphicon glyphicon-stats"></span>  
                                 </a>
-                            </div>
+							</div>
+                            {% endfor %}
                         </div>
-                        {% endfor %}
                     </div>
                     <br>
                     <h3 class="text-center">Top 3 SKUs</h3>
                     <br>
                     <div class="table">
 						<div class="row header">
-                            <div class="cell" style="font-size: 16px;">Year</div>
-							<div class="cell" style="font-size: 16px;">Rank 1</div>
-							<div class="cell" style="font-size: 16px;">Rank 2</div>
-							<div class="cell" style="font-size: 16px;">Rank 3</div>
-                        </div>
-
-                        {% for year in year_list %}
-                        
-                        <div class="row">
-							<div class="cell" style="font-family: Poppins-Bold;">
-                                {{ year }} <br><br>
+                            <div class="cell" style="font-size: 16px;">Year &nbsp;&nbsp;
+                                <span class="glyphicon glyphicon-arrow-right"></span>
+                            </div>
+                            {% for year in year_list %}
+                            <div class="cell" style="font-size: 16px;">{{year}} &nbsp;&nbsp;
                                 <a href="" style="font-size:12px;" 
                                 onclick="window.open('/top_contribution/{{ year }}_sku_0.png','newwindow', 
                                 'width=700,height=550'); 
                                 return false;">
-                                <span class="glyphicon glyphicon-stats"></span>
+                                <span class="glyphicon glyphicon-stats white"></span>
                                 </a>
-							</div>
-							<div class="cell">
+                            </div>
+                            {% endfor %}
+                        </div>                        
+                        <div class="row">
+							<div class="cell" style="font-family: Poppins-Bold;">
+                                Rank 1 <br><br>
+                            </div>
+                            {% for year in year_list %}
+                            <div class="cell">
                                 <div style="font-family: Poppins-Bold;">{{ results['sku'][year][0][0] }}</div>
                                 <br>
                                 {{ (results['sku'][year][0][1])|round(2) }} %
@@ -165,8 +201,16 @@
                                 <span class="glyphicon glyphicon-stats"></span>  
                                 </a>
 							</div>
-							<div class="cell">
-								<div style="font-family: Poppins-Bold;">{{ results['sku'][year][1][0] }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="row">
+							<div class="cell" style="font-family: Poppins-Bold;">
+                                Rank 2 <br><br>
+                            </div>
+                            {% for year in year_list %}
+                            <div class="cell">
+                                <div style="font-family: Poppins-Bold;">{{ results['sku'][year][1][0] }}</div>
                                 <br>
                                 {{ (results['sku'][year][1][1])|round(2) }} %
                                 <a href="" 
@@ -176,9 +220,17 @@
                                   return false;">
                                 <span class="glyphicon glyphicon-stats"></span>  
                                 </a>
+							</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="row">
+							<div class="cell" style="font-family: Poppins-Bold;">
+                                Rank 3 <br><br>
                             </div>
+                            {% for year in year_list %}
                             <div class="cell">
-								<div style="font-family: Poppins-Bold;">{{ results['sku'][year][2][0] }}</div>
+                                <div style="font-family: Poppins-Bold;">{{ results['sku'][year][2][0] }}</div>
                                 <br>
                                 {{ (results['sku'][year][2][1])|round(2) }} %
                                 <a href="" 
@@ -188,9 +240,9 @@
                                   return false;">
                                 <span class="glyphicon glyphicon-stats"></span>  
                                 </a>
-                            </div>
+							</div>
+                            {% endfor %}
                         </div>
-                        {% endfor %}
                     </div>
 
 				</div>

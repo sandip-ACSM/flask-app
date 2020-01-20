@@ -172,10 +172,10 @@ iframe {
   width: 100% !important;
 }
 
-.row:hover {
+/* .row:hover {
   background-color: #ececff;
-  /* cursor: pointer; */
-}
+  cursor: pointer; 
+} */
 
 /* The sidebar menu */
 .sidenav {
@@ -214,4 +214,8 @@ iframe {
 
 .cursor-pointer {
   cursor: pointer;
+}
+
+.white, .white a {
+  color: #fff;
 }

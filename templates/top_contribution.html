@@ -90,6 +90,62 @@
                         </div>
                         {% endfor %}
                     </div>
+
+                    <br>
+                    <h3 class="text-center">Top 3 Customers (Territory-wise)</h3>
+                    <br>
+                    <form action="/" method="post" name="territorylist">
+						<select id="territoryselect" name="territory" class="cursor-pointer">
+							<option hidden disabled selected value>-- select territory --</option>
+							{% for territory in territory_list %}
+                            	<option>{{ territory }}</option>
+                            {% endfor %}
+						</select>
+						<br><br>
+                        <input class="btn btn-primary cursor-pointer" id="territorysubmit" type="submit" 
+                        value="Submit">
+						<br><br>
+                    </form>
+                    <br>
+                    <div class="table">
+						<div class="row header">
+                            <div class="cell" style="font-size: 16px;">Year &nbsp;&nbsp;
+                                <span class="glyphicon glyphicon-arrow-right"></span>
+                            </div>
+                            {% for year in year_list %}
+                            <div class="cell" style="font-size: 16px;">{{year}} &nbsp;&nbsp;
+                                <a href="" style="font-size:12px;" 
+                                onclick="window.open('/top_contribution/{{ year }}_customer_0.png','newwindow', 
+                                'width=700,height=550'); 
+                                return false;">
+                                <span class="glyphicon glyphicon-stats white"></span>
+                                </a>
+                            </div>
+                            {% endfor %}
+                        </div>                     
+                        {% for rank in rank_dict['customer'][:3] %}                  
+                        <div class="row">
+							<div class="cell" style="font-family: Poppins-Bold;">
+                                Rank {{rank}} <br><br>
+                            </div>
+                            {% for year in year_list %}
+                            <div class="cell">
+                                <div style="font-family: Poppins-Bold;">{{ results['customer'][year][rank-1][0] }}</div>
+                                <br>
+                                {{ (results['customer'][year][rank-1][1])|round(2) }} %
+                                <a href="" 
+                                style="font-size:12px;" 
+								onclick="window.open('/top_contribution/{{ year }}_customer_{{rank}}.png','newwindow', 
+                         		'width=700,height=550'); 
+                                  return false;">
+                                <span class="glyphicon glyphicon-stats"></span>  
+                                </a>
+							</div>
+                            {% endfor %}
+                        </div>
+                        {% endfor %}
+                    </div>
+
                    
                     <br>
                     <h3 class="text-center">Top 3 SKUs</h3>

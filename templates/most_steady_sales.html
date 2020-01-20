@@ -22,81 +22,37 @@
                     
 					<div class="table">
 						<div class="row header">
-                            <div class="cell" style="font-size: 16px;">Lowest S.D. in<br>
-                                Avg. Number of<br> Invoices/month</div>
-							<div class="cell" style="font-size: 16px;">Rank 1</div>
-							<div class="cell" style="font-size: 16px;">Rank 2</div>
-							<div class="cell" style="font-size: 16px;">Rank 3</div>
+                            <div class="cell" style="font-size: 16px;">Lowest Variation<br>
+                                in Avg. Number of<br> Invoices/month</div>
+                                <div class="cell" style="font-size: 16px;">Territory-wise</div>
+                                <div class="cell" style="font-size: 16px;">Customer-wise</div>
+                                <div class="cell" style="font-size: 16px;">SKU-wise</div>
                         </div>
 
+                        {% for rank in rank_list %}
                         <div class="row">
 							<div class="cell">
-                                <div style="font-family: Poppins-Bold;"> Territory-wise &nbsp;&nbsp;
-                                    <span class="glyphicon glyphicon-arrow-right"></span>
+                                <div style="font-family: Poppins-Bold;"> Rank {{rank}} &nbsp;&nbsp;
+                                    <!-- <span class="glyphicon glyphicon-arrow-right"></span> -->
                                 </div>
                             </div>
 							<div class="cell">
                                 <div style="font-family: Poppins-Bold;">
-                                    {{ results['territory'][0][0] }}</div>
-                                <br><div>{{ results['territory'][0][1] }}</div>
+                                    {{ results['territory'][rank-1][0] }}</div>
+                                <br><div>{{ results['territory'][rank-1][1] }}</div>
 							</div>
 							<div class="cell">
                                 <div style="font-family: Poppins-Bold;">
-                                    {{ results['territory'][1][0] }}</div>
-                                <br><div>{{ results['territory'][1][1] }}</div>
+                                    {{ results['customer'][rank-1][0] }}</div>
+                                <br><div>{{ results['customer'][rank-1][1] }}</div>
                             </div>
                             <div class="cell">
                                 <div style="font-family: Poppins-Bold;">
-                                    {{ results['territory'][2][0] }}</div>
-                                <br><div>{{ results['territory'][2][1] }}</div>
+                                    {{ results['sku'][rank-1][0] }}</div>
+                                <br><div>{{ results['sku'][rank-1][1] }}</div>
                             </div>
                         </div>
-
-                        <div class="row">
-							<div class="cell">
-                                <div style="font-family: Poppins-Bold;"> Customer-wise &nbsp;&nbsp;
-                                    <span class="glyphicon glyphicon-arrow-right"></span>
-                                </div>
-                            </div>
-							<div class="cell">
-                                <div style="font-family: Poppins-Bold;">
-                                    {{ results['customer'][0][0] }}</div>
-                                <br><div>{{ results['customer'][0][1] }}</div>
-							</div>
-							<div class="cell">
-                                <div style="font-family: Poppins-Bold;">
-                                    {{ results['customer'][1][0] }}</div>
-                                <br><div>{{ results['customer'][1][1] }}</div>
-                            </div>
-                            <div class="cell">
-                                <div style="font-family: Poppins-Bold;">
-                                    {{ results['customer'][2][0] }}</div>
-                                <br><div>{{ results['customer'][2][1] }}</div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-							<div class="cell">
-                                <div style="font-family: Poppins-Bold;"> SKU-wise &nbsp;&nbsp;
-                                    <span class="glyphicon glyphicon-arrow-right"></span>
-                                </div>
-                            </div>
-							<div class="cell">
-                                <div style="font-family: Poppins-Bold;">
-                                    {{ results['sku'][0][0] }}</div>
-                                <br><div>{{ results['sku'][0][1] }}</div>
-							</div>
-							<div class="cell">
-                                <div style="font-family: Poppins-Bold;">
-                                    {{ results['sku'][1][0] }}</div>
-                                <br><div>{{ results['sku'][1][1] }}</div>
-                            </div>
-                            <div class="cell">
-                                <div style="font-family: Poppins-Bold;">
-                                    {{ results['sku'][2][0] }}</div>
-                                <br><div>{{ results['sku'][2][1] }}</div>
-                            </div>
-                        </div>
+                        {% endfor %}
 
                     </div>
 				</div>

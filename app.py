@@ -34,10 +34,18 @@ year_list_query = '''
 	select distinct time_bucket from company_profile where time_bucket_type='year' 
 	order by time_bucket;
 	'''
+territory_list_query = '''
+	select distinct territory_name from territory_profile;
+	'''
 cursor1 = db.cursor()
 cursor1.execute(year_list_query)
 year_list_results = cursor1.fetchall()
 global_data['year_list'] = list(zip(*year_list_results))[0]
+
+cursor1 = db.cursor()
+cursor1.execute(territory_list_query)
+territory_list_results = cursor1.fetchall()
+global_data['territory_list'] = list(zip(*territory_list_results))[0]
 
 
 @app.route("/", methods=['GET', 'POST'])
@@ -190,13 +198,12 @@ def top_contribution():
 		'customer': {},
 		'sku': {}
 	}
-	# global_data['sales'] = {}
+	territory_wise_results = {}
 	cursor = db.cursor()
 	for year in global_data['year_list']:
 		query_overall = '''select sale_val from company_profile where 
 		time_bucket='{}';'''.format(year)
 		cursor.execute(query_overall)
-		# global_data['sales'][year] = cursor.fetchall()[0][0]
 		total_sale = cursor.fetchall()[0][0]
 		query_territory = '''
 		select territory_name, sale_val*100/{} from territory_profile where 
@@ -216,15 +223,14 @@ def top_contribution():
 		cursor.execute(query_sku)
 		results['sku'][year] = cursor.fetchall()
 		
-	global_data['top_contribution'] = results
-	# print(global_data['top_contribution'])
 	rank_dict = {
 		'territory': list(range(1,4)),
 		'customer': list(range(1,11)),
 		'sku': list(range(1,4))
 	}
 	return render_template('top_contribution.html', results=results,\
-							year_list=global_data['year_list'],rank_dict=rank_dict)
+							year_list=global_data['year_list'],rank_dict=rank_dict,\
+							territory_list=global_data['territory_list'])
 
 
 @app.route("/top_contribution/<string:graph_name>.png", methods=['GET'])
@@ -328,7 +334,9 @@ def top_growing_sales():
 	results['territory'] = get_entity_wise_top_3_cagr('territory', reverse=True)
 	results['customer'] = get_entity_wise_top_3_cagr('customer', reverse=True)
 	results['sku'] = get_entity_wise_top_3_cagr('sku', reverse=True)
-	return render_template('top_growing_sales.html', results=results)
+
+	rank_list = list(range(1,4))
+	return render_template('top_growing_sales.html', results=results, rank_list=rank_list)
 
 
 @app.route("/slowest_growing_sales", methods=['GET', 'POST'])
@@ -337,7 +345,9 @@ def top_declining_sales():
 	results['territory'] = get_entity_wise_top_3_cagr('territory', reverse=False)
 	results['customer'] = get_entity_wise_top_3_cagr('customer', reverse=False)
 	results['sku'] = get_entity_wise_top_3_cagr('sku', reverse=False)
-	return render_template('slowest_growing_sales.html', results=results)
+
+	rank_list = list(range(1,4))
+	return render_template('slowest_growing_sales.html', results=results, rank_list=rank_list)
 
 
 @app.route("/most_steady_sales", methods=['GET', 'POST'])
@@ -352,8 +362,11 @@ def most_steady_sales():
 		steady_sales_results['territory'] = get_entity_wise_most_3_steady_sales('territory')[current_year]
 		steady_sales_results['customer'] = get_entity_wise_most_3_steady_sales('customer')[current_year]
 		steady_sales_results['sku'] = get_entity_wise_most_3_steady_sales('sku')[current_year]
+	
+	rank_list = list(range(1,4))
 	return render_template('most_steady_sales.html', results=steady_sales_results, 
-							year_list=global_data['year_list'], current_year=current_year)
+							year_list=global_data['year_list'], current_year=current_year,\
+							rank_list=rank_list)
 
 
 def create_bar_plot(x, y, xlabel, ylabel, title, ylimit=(),\

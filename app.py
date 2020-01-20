@@ -295,7 +295,7 @@ def cagr():
 	select time_bucket, sale_val from company_profile where time_bucket_type='month';
 	'''
 	overall_df = pd.read_sql(overall_query, db)
-	cagr_result['overall'] = calculate_cagr(overall_df)
+	cagr_result['Overall'] = calculate_cagr(overall_df)
 
 	territory_query = '''
 	select territory_name, time_bucket, sale_val from territory_profile where 
@@ -308,22 +308,19 @@ def cagr():
 		cagr_result[territory] = calculate_cagr(df)
 	cagr_result = {k: v for k, v in sorted(cagr_result.items(), \
 						key=lambda item: item[1], reverse=True)}
-	global_data['cagr'] = cagr_result
-	territory_list_sorted = list(cagr_result.keys())
-	territory_list_sorted.remove('overall')
-	return render_template('cagr.html', cagr_result=cagr_result, 
-							territory_list=territory_list_sorted)
 
-@app.route("/cagr/plot.png", methods=['GET'])
-def cagr_plot():
-	x,y = list(global_data['cagr'].keys()), list(global_data['cagr'].values())
+	x,y = list(cagr_result.keys()), list(cagr_result.values())
+	overall_index = x.index('Overall')
 	xlabel, ylabel = 'Territory', 'CAGR (%)'
 	title = f'Territory-wise CAGR (%)'
 	fig = create_bar_plot(x, y, xlabel, ylabel, title, ylimit=(26, 29),\
-							width= 0.5, rotation=30, text_offset=0.05)
-	output = io.BytesIO()
-	FigureCanvas(fig).print_png(output)
-	return Response(output.getvalue(), mimetype='image/png')
+						width= 0.5, rotation=30, text_offset=0.05,\
+						specific_bar_index=overall_index)
+	fig.savefig(f'{upload_folder}/cagr.png', dpi=100)
+
+	return render_template('cagr.html', cagr_result=cagr_result, \
+							upload_folder=upload_folder)
+
 
 @app.route("/top_growing_sales", methods=['GET', 'POST'])
 def top_growing_sales():
@@ -360,11 +357,14 @@ def most_steady_sales():
 
 
 def create_bar_plot(x, y, xlabel, ylabel, title, ylimit=(),\
-                    width=0.8, rotation=0, bottom=0,text_offset=0):
+                    width=0.8, rotation=0, bottom=0,text_offset=0,\
+					specific_bar_index=-1, specific_bar_color='r'):
 	fig = plt.figure(figsize=(12,8), dpi=100)
 	ax = fig.add_subplot(111)
 	xrange = list(range(len(x)))
-	plt.bar(xrange, y, width=width, align='center')
+	barlist = plt.bar(xrange, y, width=width, align='center')
+	if specific_bar_index != -1:
+		barlist[specific_bar_index].set_color('r')
 	plt.xticks(xrange, x, fontsize=14, rotation=rotation)
 	plt.yticks(fontsize=14)
 	plt.xlabel(xlabel, fontsize=14);

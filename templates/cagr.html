@@ -6,41 +6,8 @@
 			<div class="container-table100">
 				<div class="wrap-table100">
 					<h1 class="text-center">CAGR</h1>
-
-					<div class="table">
-                        <div class="row header">
-							<div class="cell" style="font-size: 16px;">Territory name</div>
-							<div class="cell" style="font-size: 16px;">CAGR (percent)</div>
-						</div>
-                        {% for territory in territory_list %}
-						
-						<div class="row">
-							<div class="cell" style="font-family: Poppins-Bold;">
-								{{ territory }}
-							</div>
-							<div class="cell">
-								{{ cagr_result[territory] }} %
-							</div>
-                        </div>
-
-                        {% endfor %}
-                        <div class="row">
-							<div class="cell" style="font-family: Poppins-Bold;">
-                                Overall
-							</div>
-							<div class="cell">
-                                {{ cagr_result['overall'] }} % &nbsp;&nbsp;&nbsp;
-                                <a href="" 
-                                style="font-size:12px;" 
-								onclick="window.open('/cagr/plot.png','newwindow', 
-                         		'width=700,height=550'); 
-                                  return false;">
-                                <span class="glyphicon glyphicon-stats"></span>  
-                                </a>
-							</div>
-                        </div>
-
-					</div>
+					<br>
+					<img src="{{upload_folder}}/cagr.png"  height="500" width="770">
 				</div>
 			</div>
 		</div>

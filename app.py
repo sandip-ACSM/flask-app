@@ -429,6 +429,21 @@ def create_line_plot(x, y, xlabel, ylabel, linetype, title,
 
 def create_multiple_line_plot(x_dict, y_dict, xlabel, ylabel, linetype_list, label_list, \
 							  title, xlimit=(), ylimit=(), rotation=0, text_offset=0):
+	'''
+	This function draws multiple line graphs on a single plot. The data is given
+	in form of a dict as follows:
+
+	x_dict = {
+		'label1': [...],
+		'label2': [...],
+		...
+	}
+	y_dict = {
+		'label1': [...],
+		'label2': [...],
+		...
+	}
+	'''
 	fig = plt.figure(figsize=(12,8), dpi=100)
 	ax = fig.add_subplot(111)
 	for ind, (label, linetype) in enumerate(zip(label_list, linetype_list)):

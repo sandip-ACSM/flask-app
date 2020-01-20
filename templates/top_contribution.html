@@ -24,19 +24,21 @@
                                 </a>
                             </div>
                             {% endfor %}
-                        </div>                        
+                        </div>
+
+                        {% for rank in rank_dict['territory'] %}                  
                         <div class="row">
 							<div class="cell" style="font-family: Poppins-Bold;">
-                                Rank 1 <br><br>
+                                Rank {{rank}} <br><br>
                             </div>
                             {% for year in year_list %}
                             <div class="cell">
-                                <div style="font-family: Poppins-Bold;">{{ results['territory'][year][0][0] }}</div>
+                                <div style="font-family: Poppins-Bold;">{{ results['territory'][year][rank-1][0] }}</div>
                                 <br>
-                                {{ (results['territory'][year][0][1])|round(2) }} %
+                                {{ (results['territory'][year][rank-1][1])|round(2) }} %
                                 <a href="" 
                                 style="font-size:12px;" 
-								onclick="window.open('/top_contribution/{{ year }}_territory_1.png','newwindow', 
+								onclick="window.open('/top_contribution/{{ year }}_territory_{{rank}}.png','newwindow', 
                          		'width=700,height=550'); 
                                   return false;">
                                 <span class="glyphicon glyphicon-stats"></span>  
@@ -44,50 +46,11 @@
 							</div>
                             {% endfor %}
                         </div>
-
-                        <div class="row">
-							<div class="cell" style="font-family: Poppins-Bold;">
-                                Rank 2 <br><br>
-                            </div>
-                            {% for year in year_list %}
-                            <div class="cell">
-                                <div style="font-family: Poppins-Bold;">{{ results['territory'][year][1][0] }}</div>
-                                <br>
-                                {{ (results['territory'][year][1][1])|round(2) }} %
-                                <a href="" 
-                                style="font-size:12px;" 
-								onclick="window.open('/top_contribution/{{ year }}_territory_1.png','newwindow', 
-                         		'width=700,height=550'); 
-                                  return false;">
-                                <span class="glyphicon glyphicon-stats"></span>  
-                                </a>
-							</div>
-                            {% endfor %}
-                        </div>
-
-                        <div class="row">
-							<div class="cell" style="font-family: Poppins-Bold;">
-                                Rank 3 <br><br>
-                            </div>
-                            {% for year in year_list %}
-                            <div class="cell">
-                                <div style="font-family: Poppins-Bold;">{{ results['territory'][year][2][0] }}</div>
-                                <br>
-                                {{ (results['territory'][year][2][1])|round(2) }} %
-                                <a href="" 
-                                style="font-size:12px;" 
-								onclick="window.open('/top_contribution/{{ year }}_territory_1.png','newwindow', 
-                         		'width=700,height=550'); 
-                                  return false;">
-                                <span class="glyphicon glyphicon-stats"></span>  
-                                </a>
-							</div>
-                            {% endfor %}
-                        </div>
-
+                        {% endfor %}
                     </div>
+
                     <br>
-                    <h3 class="text-center">Top 3 Customers (Overall)</h3>
+                    <h3 class="text-center">Top 10 Customers (Overall)</h3>
                     <br>
                     <div class="table">
 						<div class="row header">
@@ -104,19 +67,20 @@
                                 </a>
                             </div>
                             {% endfor %}
-                        </div>                        
+                        </div>                     
+                        {% for rank in rank_dict['customer'] %}                  
                         <div class="row">
 							<div class="cell" style="font-family: Poppins-Bold;">
-                                Rank 1 <br><br>
+                                Rank {{rank}} <br><br>
                             </div>
                             {% for year in year_list %}
                             <div class="cell">
-                                <div style="font-family: Poppins-Bold;">{{ results['customer'][year][0][0] }}</div>
+                                <div style="font-family: Poppins-Bold;">{{ results['customer'][year][rank-1][0] }}</div>
                                 <br>
-                                {{ (results['customer'][year][0][1])|round(2) }} %
+                                {{ (results['customer'][year][rank-1][1])|round(2) }} %
                                 <a href="" 
                                 style="font-size:12px;" 
-								onclick="window.open('/top_contribution/{{ year }}_customer_1.png','newwindow', 
+								onclick="window.open('/top_contribution/{{ year }}_customer_{{rank}}.png','newwindow', 
                          		'width=700,height=550'); 
                                   return false;">
                                 <span class="glyphicon glyphicon-stats"></span>  
@@ -124,47 +88,9 @@
 							</div>
                             {% endfor %}
                         </div>
-
-                        <div class="row">
-							<div class="cell" style="font-family: Poppins-Bold;">
-                                Rank 2 <br><br>
-                            </div>
-                            {% for year in year_list %}
-                            <div class="cell">
-                                <div style="font-family: Poppins-Bold;">{{ results['customer'][year][1][0] }}</div>
-                                <br>
-                                {{ (results['customer'][year][1][1])|round(2) }} %
-                                <a href="" 
-                                style="font-size:12px;" 
-								onclick="window.open('/top_contribution/{{ year }}_customer_1.png','newwindow', 
-                         		'width=700,height=550'); 
-                                  return false;">
-                                <span class="glyphicon glyphicon-stats"></span>  
-                                </a>
-							</div>
-                            {% endfor %}
-                        </div>
-
-                        <div class="row">
-							<div class="cell" style="font-family: Poppins-Bold;">
-                                Rank 3 <br><br>
-                            </div>
-                            {% for year in year_list %}
-                            <div class="cell">
-                                <div style="font-family: Poppins-Bold;">{{ results['customer'][year][2][0] }}</div>
-                                <br>
-                                {{ (results['customer'][year][2][1])|round(2) }} %
-                                <a href="" 
-                                style="font-size:12px;" 
-								onclick="window.open('/top_contribution/{{ year }}_customer_1.png','newwindow', 
-                         		'width=700,height=550'); 
-                                  return false;">
-                                <span class="glyphicon glyphicon-stats"></span>  
-                                </a>
-							</div>
-                            {% endfor %}
-                        </div>
+                        {% endfor %}
                     </div>
+                   
                     <br>
                     <h3 class="text-center">Top 3 SKUs</h3>
                     <br>
@@ -184,18 +110,19 @@
                             </div>
                             {% endfor %}
                         </div>                        
+                        {% for rank in rank_dict['sku'] %}                  
                         <div class="row">
 							<div class="cell" style="font-family: Poppins-Bold;">
-                                Rank 1 <br><br>
+                                Rank {{rank}} <br><br>
                             </div>
                             {% for year in year_list %}
                             <div class="cell">
-                                <div style="font-family: Poppins-Bold;">{{ results['sku'][year][0][0] }}</div>
+                                <div style="font-family: Poppins-Bold;">{{ results['sku'][year][rank-1][0] }}</div>
                                 <br>
-                                {{ (results['sku'][year][0][1])|round(2) }} %
+                                {{ (results['sku'][year][rank-1][1])|round(2) }} %
                                 <a href="" 
                                 style="font-size:12px;" 
-								onclick="window.open('/top_contribution/{{ year }}_sku_1.png','newwindow', 
+								onclick="window.open('/top_contribution/{{ year }}_sku_{{rank}}.png','newwindow', 
                          		'width=700,height=550'); 
                                   return false;">
                                 <span class="glyphicon glyphicon-stats"></span>  
@@ -203,46 +130,7 @@
 							</div>
                             {% endfor %}
                         </div>
-
-                        <div class="row">
-							<div class="cell" style="font-family: Poppins-Bold;">
-                                Rank 2 <br><br>
-                            </div>
-                            {% for year in year_list %}
-                            <div class="cell">
-                                <div style="font-family: Poppins-Bold;">{{ results['sku'][year][1][0] }}</div>
-                                <br>
-                                {{ (results['sku'][year][1][1])|round(2) }} %
-                                <a href="" 
-                                style="font-size:12px;" 
-								onclick="window.open('/top_contribution/{{ year }}_sku_1.png','newwindow', 
-                         		'width=700,height=550'); 
-                                  return false;">
-                                <span class="glyphicon glyphicon-stats"></span>  
-                                </a>
-							</div>
-                            {% endfor %}
-                        </div>
-
-                        <div class="row">
-							<div class="cell" style="font-family: Poppins-Bold;">
-                                Rank 3 <br><br>
-                            </div>
-                            {% for year in year_list %}
-                            <div class="cell">
-                                <div style="font-family: Poppins-Bold;">{{ results['sku'][year][2][0] }}</div>
-                                <br>
-                                {{ (results['sku'][year][2][1])|round(2) }} %
-                                <a href="" 
-                                style="font-size:12px;" 
-								onclick="window.open('/top_contribution/{{ year }}_sku_1.png','newwindow', 
-                         		'width=700,height=550'); 
-                                  return false;">
-                                <span class="glyphicon glyphicon-stats"></span>  
-                                </a>
-							</div>
-                            {% endfor %}
-                        </div>
+                        {% endfor %}
                     </div>
 
 				</div>

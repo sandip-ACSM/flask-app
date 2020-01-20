@@ -24,14 +24,11 @@
 						
 						<div class="row">
 							<div class="cell" style="font-family: Poppins-Bold;">
-								Year
+								Time duration
 							</div>
 							<div class="cell">
-								{% if current_year == '----' %}
-									{{current_year}}
-								{% else %}
-									Apr, {{ current_year }} - Mar, {{ (current_year|int) +1 }}
-								{% endif %}
+								Apr, {{ current_year }} - Mar, {{ (current_year|int) +1 }} <br>
+								(Last invoice date: {{last_invoice_date}})
 							</div>
 							<div class="cell">
 								<a href="" style="font-size:12px;" target="_blank"></a>

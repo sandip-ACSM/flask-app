@@ -23,6 +23,8 @@ username = config['database']['username']
 password = config['database']['password']
 db_name = config['database']['db_name']
 
+upload_folder = config['upload_folder']['location']
+
 
 app = Flask(__name__)
 global_data = {}
@@ -40,14 +42,12 @@ global_data['year_list'] = list(zip(*year_list_results))[0]
 
 @app.route("/", methods=['GET', 'POST'])
 def home():
-	results = ['--']*6
 	cursor = db.cursor() 
 	current_year = global_data['year_list'][-1]
 	query = '''SELECT num_territories, num_customers, sale_val, 
 		avg_num_invoice_per_month, avg_invoice_val, month_end_skew FROM 
 		company_profile where time_bucket='{}';'''.format(current_year)
 	cursor.execute(query)
-	# results = cursor.fetchall()[0]
 	if request.method=='POST':
 		current_year = request.form['year']
 		query = '''SELECT num_territories, num_customers, sale_val, 
@@ -57,7 +57,12 @@ def home():
 	results = list(cursor.fetchall()[0])
 	results[2] = str(round(results[2]/10000000,2))+' Cr'
 	results[-1] = str(results[-1])+' %'
-	return render_template('index.html', results=results, 
+
+	date_query = '''select max(date) from invoice_order where date<=
+	'{}-12-31';'''.format(current_year)
+	cursor.execute(date_query)
+	last_invoice_date = cursor.fetchall()[0][0].strftime("%d-%m-%Y")
+	return render_template('index.html', results=results, last_invoice_date=last_invoice_date,
 				year_list=global_data['year_list'], current_year=current_year)
 
 
@@ -150,47 +155,19 @@ def seasonality():
 	query = '''select time_bucket, sale_val from 
 	company_profile where time_bucket_type='month' order by time_bucket;'''
 	cursor.execute(query)
-	month_list_results = cursor.fetchall()
-	# [month_list, sales_list] = list(zip(*month_list_results))
-	
+	month_list_results = cursor.fetchall()	
 	for year in global_data['year_list']:
 		results[year] = {}
 		for x,y in (month_list_results):
 			if x[:4] == str(year):
 				results[year][x[5:]] = round(y/10000000,2)
-	global_data['seasonality'] = results
-	return render_template('seasonality.html', results=results,\
-							year_list=global_data['year_list'])
 
-
-@app.route("/seasonality/<string:graph_name>.png", methods=['GET'])
-def seasonality_plot_graph(graph_name):
-	monthly_sales_dict = global_data['seasonality'][graph_name]
-	x,y = list(monthly_sales_dict.keys()), list(monthly_sales_dict.values())
-	x = [int(a) for a in x]
-	y = [a for _,a in sorted(zip(x,y))]
-	# x.sort()
-	x = ['APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', \
-		 'DEC', 'JAN', 'FEB', 'MAR']
-	x = x[:len(y)]
-	xlabel, ylabel = 'Month', 'Sales (Crores)'
-	title = 'Month-wise plot (APR, {} - MAR, {})'.format(graph_name, int(graph_name)+1)
-	fig = create_line_plot(x, y, xlabel, ylabel,'bD--',title,\
-						   text_offset=0.3)
-	output = io.BytesIO()
-	FigureCanvas(fig).print_png(output)
-	return Response(output.getvalue(), mimetype='image/png')
-
-
-@app.route("/seasonality/plot.png", methods=['GET'])
-def seasonality_plot_graph2():
 	x_dict, y_dict = {}, {}
 	for year in global_data['year_list']:
-		monthly_sales_dict = global_data['seasonality'][year]
+		monthly_sales_dict = results[year]
 		x,y = list(monthly_sales_dict.keys()),list(monthly_sales_dict.values())
 		x = [int(a) for a in x]
 		y = [a for _,a in sorted(zip(x,y))]
-		# x.sort()
 		x = ['APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', \
 			'DEC', 'JAN', 'FEB', 'MAR']
 		x = x[:len(y)]
@@ -199,9 +176,11 @@ def seasonality_plot_graph2():
 	title = 'Month-wise plot (APR to MAR)'
 	fig = create_multiple_line_plot(x_dict, y_dict, xlabel, ylabel,['bD--','rv--','go--'],\
 						   global_data['year_list'], title, text_offset=0.3)
-	output = io.BytesIO()
-	FigureCanvas(fig).print_png(output)
-	return Response(output.getvalue(), mimetype='image/png')
+	fig.savefig(f'{upload_folder}/seasonality.png', dpi=100)
+
+	return render_template('seasonality.html', results=results,\
+							year_list=global_data['year_list'], \
+							upload_folder=upload_folder) 
 
 
 @app.route("/top_contribution", methods=['GET', 'POST'])
@@ -227,7 +206,7 @@ def top_contribution():
 
 		query_customer = '''
 		select customer_name, sale_val*100/{} from customer_profile where 
-		time_bucket='{}' order by sale_val desc limit 3;'''.format(total_sale, year)
+		time_bucket='{}' order by sale_val desc limit 10;'''.format(total_sale, year)
 		cursor.execute(query_customer)
 		results['customer'][year] = cursor.fetchall()
 
@@ -239,8 +218,13 @@ def top_contribution():
 		
 	global_data['top_contribution'] = results
 	# print(global_data['top_contribution'])
+	rank_dict = {
+		'territory': list(range(1,4)),
+		'customer': list(range(1,11)),
+		'sku': list(range(1,4))
+	}
 	return render_template('top_contribution.html', results=results,\
-							year_list=global_data['year_list'])
+							year_list=global_data['year_list'],rank_dict=rank_dict)
 
 
 @app.route("/top_contribution/<string:graph_name>.png", methods=['GET'])
@@ -361,12 +345,11 @@ def top_declining_sales():
 
 @app.route("/most_steady_sales", methods=['GET', 'POST'])
 def most_steady_sales():
-	steady_sales_results = {
-		'territory': [['--','--'],['--','--'], ['--','--']],
-		'customer': [['--','--'],['--','--'], ['--','--']],
-		'sku': [['--','--'],['--','--'], ['--','--']],
-	}
-	current_year = '----'
+	steady_sales_results = {}
+	current_year = global_data['year_list'][-1]
+	steady_sales_results['territory'] = get_entity_wise_most_3_steady_sales('territory')[current_year]
+	steady_sales_results['customer'] = get_entity_wise_most_3_steady_sales('customer')[current_year]
+	steady_sales_results['sku'] = get_entity_wise_most_3_steady_sales('sku')[current_year]
 	if request.method=='POST':
 		current_year = request.form['year']
 		steady_sales_results['territory'] = get_entity_wise_most_3_steady_sales('territory')[current_year]

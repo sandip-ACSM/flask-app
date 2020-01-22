@@ -88,8 +88,8 @@ def home_plot_graph(graph_name):
 		[x,y] = list(zip(*results))
 		xlabel, ylabel = 'Territory', 'Customer number'
 		title = 'Territory-wise Customer number'
-		fig = create_bar_plot(x, y, xlabel, ylabel, title,ylimit=(0, 25),\
-							  width=0.5, rotation=30, text_offset=0.05)
+		fig = create_bar_plot(x, y, xlabel, ylabel, title, # ylimit=(0, 25),\
+							  width=0.5, rotation=30)
 		output = io.BytesIO()
 		FigureCanvas(fig).print_png(output)
 		return Response(output.getvalue(), mimetype='image/png')
@@ -104,8 +104,8 @@ def home_plot_graph(graph_name):
 		y = [round(a/10000000,2) for a in y]
 		xlabel, ylabel = 'Territory', 'Sales (Crores)'
 		title = 'Territory-wise sales in Crores'
-		fig = create_bar_plot(x, y, xlabel, ylabel, title,ylimit=(4, 13),\
-							  width=0.5, rotation=30, text_offset=0.05)
+		fig = create_bar_plot(x, y, xlabel, ylabel, title, # ylimit=(4, 13),\
+							  width=0.5, rotation=30)
 		output = io.BytesIO()
 		FigureCanvas(fig).print_png(output)
 		return Response(output.getvalue(), mimetype='image/png')
@@ -119,8 +119,8 @@ def home_plot_graph(graph_name):
 		[x,y] = list(zip(*results))
 		xlabel, ylabel = 'Territory', 'Avg. number of invoices/month'
 		title = 'Territory-wise avg. number of invoices/month'
-		fig = create_bar_plot(x, y, xlabel, ylabel, title, ylimit=(60, 110),\
-							  width=0.5, rotation=30, text_offset=0.5)
+		fig = create_bar_plot(x, y, xlabel, ylabel, title, # ylimit=(60, 110),\
+							  width=0.5, rotation=30)
 		output = io.BytesIO()
 		FigureCanvas(fig).print_png(output)
 		return Response(output.getvalue(), mimetype='image/png')
@@ -135,8 +135,8 @@ def home_plot_graph(graph_name):
 		[x,y] = list(zip(*results))
 		xlabel, ylabel = 'Territory', 'Average invoice value'
 		title = 'Territory-wise average invoice value'
-		fig = create_bar_plot(x, y, xlabel, ylabel, title, ylimit=(88000, 102500),\
-							  width=0.5, rotation=30, text_offset=100)
+		fig = create_bar_plot(x, y, xlabel, ylabel, title, # ylimit=(88000, 102500),\
+							  width=0.5, rotation=30)
 		output = io.BytesIO()
 		FigureCanvas(fig).print_png(output)
 		return Response(output.getvalue(), mimetype='image/png')
@@ -152,7 +152,7 @@ def home_plot_graph(graph_name):
 		xlabel, ylabel = 'Territory', 'Monthly skew pattern (average) (%)'
 		title = 'Territory-wise monthly skew pattern in %'
 		fig = create_multiple_bar_plot(x, y1, y2, y3, y4, xlabel, ylabel, title,\
-							  width=0.5, rotation=30, text_offset=0.5)
+							  width=0.5, rotation=30)
 		output = io.BytesIO()
 		FigureCanvas(fig).print_png(output)
 		return Response(output.getvalue(), mimetype='image/png')
@@ -198,10 +198,19 @@ def top_contribution():
 	results = {
 		'territory': {},
 		'customer': {},
-		'sku': {}
+		'territory_wise_customer': {},
+		'sku': {},
+		'territory_wise_sku': {},
 	}
 	territory_wise_results = {}
 	cursor = db.cursor()
+	rank_dict = {
+		'territory': list(range(1,4)),
+		'customer': list(range(1,11)),
+		'territory_wise_customer': list(range(1,4)),
+		'sku': list(range(1,4)),
+		'territory_wise_sku': list(range(1,4)),
+	}
 	for year in global_data['year_list']:
 		query_overall = '''select sale_val from company_profile where 
 		time_bucket='{}';'''.format(year)
@@ -225,21 +234,60 @@ def top_contribution():
 		cursor.execute(query_sku)
 		results['sku'][year] = cursor.fetchall()
 
-		# if request.method=='POST':
-		# 	selected_territory = request.form['territory']
-		# 	query = '''select customer_name, sale_val*100/{} from customer_profile where 
-		# 	time_bucket='{}' order by sale_val desc limit 3;
-		# 	'''.format(total_sale, year)
-		# 	cursor.execute(query)
-		
-	rank_dict = {
-		'territory': list(range(1,4)),
-		'customer': list(range(1,11)),
-		'sku': list(range(1,4))
-	}
+	top_territory_last_year = results['territory'][global_data['year_list'][-1]][0][0]
+
+	for year in global_data['year_list']:
+		selected_territory = top_territory_last_year
+		query_territory_wise_customer = '''select customer_name, sale_val*100/{} from 
+		customer_profile where territory_name='{}' and time_bucket='{}' 
+		order by sale_val desc limit 3;'''.format(total_sale, selected_territory, year)
+		cursor.execute(query_territory_wise_customer)
+		results['territory_wise_customer'][year] = cursor.fetchall()
+
+		selected_territory2 = top_territory_last_year
+		query_territory_wise_sku = '''select sku_name, sale_val*100/{} from 
+		territory_sku_profile where territory_name='{}' and time_bucket='{}' 
+		order by sale_val desc limit 3;'''.format(total_sale, selected_territory2, year)
+		cursor.execute(query_territory_wise_sku)
+		results['territory_wise_sku'][year] = cursor.fetchall()
+
+	if request.method=='POST':
+		for year in global_data['year_list']:
+			try:
+				selected_territory = request.form['territory']
+				scroll = 'territorry_wise_customer'
+			except:
+				selected_territory = top_territory_last_year
+			query_territory_wise_customer = '''select customer_name, sale_val*100/{} from 
+			customer_profile where territory_name='{}' and time_bucket='{}' 
+			order by sale_val desc limit 3;'''.format(total_sale,selected_territory, year)
+			cursor.execute(query_territory_wise_customer)
+			results['territory_wise_customer'][year] = cursor.fetchall()
+
+			try:
+				selected_territory2 = request.form['territory2']
+				scroll = 'territorry_wise_sku'
+			except:
+				selected_territory2 = top_territory_last_year
+			query_territory_wise_sku = '''select sku_name, sale_val*100/{} from 
+			territory_sku_profile where territory_name='{}' and time_bucket='{}' 
+			order by sale_val desc limit 3;'''.format(total_sale, selected_territory2, year)
+			cursor.execute(query_territory_wise_sku)
+			results['territory_wise_sku'][year] = cursor.fetchall()
+
+		global_data['top_contribution'] = results
+		return render_template('top_contribution.html', results=results,\
+						year_list=global_data['year_list'],rank_dict=rank_dict,\
+						territory_list=sorted(global_data['territory_list']), 
+						selected_territory=selected_territory,
+						selected_territory2=selected_territory2, scroll=scroll)
+	
+	global_data['top_contribution'] = results
 	return render_template('top_contribution.html', results=results,\
 							year_list=global_data['year_list'],rank_dict=rank_dict,\
-							territory_list=global_data['territory_list'])
+							territory_list=sorted(global_data['territory_list']), 
+							selected_territory=selected_territory,
+							selected_territory2=selected_territory2)
 
 
 @app.route("/top_contribution/<string:graph_name>.png", methods=['GET'])
@@ -248,12 +296,26 @@ def top_contribution_plot_graph(graph_name):
 	entity = graph_name[5:-2]
 	rank = int(graph_name[-1])
 
+	# try:
+	# 	terr_name = request.args['territory']
+	# except:
+	# 	pass
+
 	cursor = db.cursor()
 	query = '''
-	select num_territories, num_customers, num_skus from company_profile where time_bucket='2017'; 
-	'''
+	select num_customers, num_skus, num_territories from company_profile where time_bucket='{}'; 
+	'''.format(year)
 	cursor.execute(query)
 	entity_num = cursor.fetchall()[0]
+
+	if request.args['territory']:
+		terr_name = request.args['territory']
+		cursor = db.cursor()
+		query = '''
+		select num_customers, num_skus from territory_profile where time_bucket='{}'
+		and territory_name = '{}';'''.format(year, terr_name)
+		cursor.execute(query)
+		entity_num = cursor.fetchall()[0]
 
 	if rank != 0:
 		# Month-wise analysis
@@ -282,23 +344,26 @@ def top_contribution_plot_graph(graph_name):
 		x = x[:len(y)]
 		xlabel, ylabel = 'Month', 'Sales (Crores)'
 		title = f'Month-wise sales of {entity_name} in calender year-{year}\n'
-		fig = create_line_plot(x, y, xlabel, ylabel,'bD--',title,\
-							text_offset=max(y)/40)
+		fig = create_line_plot(x, y, xlabel, ylabel,'bD--',title)
+			# ,text_offset=max(y)/40)
 	elif rank == 0:
 		# Overall analysis in pie chart
 		[x,y] = zip(*global_data['top_contribution'][entity][year])
 		x = list(x)
 		y = [round(a,2) for a in y]
 		others_percent = round(100-sum(y), 2)
-		if entity == 'territory':
-			x.append('Other {} territories'.format(entity_num[0]-3))
-		elif entity == 'customer':
-			x.append('Other {} customers'.format(entity_num[1]-3))
+		
+		if entity == 'customer':
+			x.append('Other {} customers'.format(entity_num[0]-3))
 		elif entity == 'sku':
-			x.append('Other {} skus'.format(entity_num[2]-3))
+			x.append('Other {} skus'.format(entity_num[1]-3))
+		if entity == 'territory':
+			x.append('Other {} territories'.format(entity_num[2]-3))
 		y.append(others_percent)
 		title = f'Pie-diagram for sales of {entity} in calender year-{year}'
-		fig = create_pie_plot(x, y, (0.1, 0.1, 0.1, 0), title)
+		explode = [0.1]*(len(x)-1)
+		explode.append(0)
+		fig = create_pie_plot(x, y, explode, title)
 	output = io.BytesIO()
 	FigureCanvas(fig).print_png(output)
 	return Response(output.getvalue(), mimetype='image/png')
@@ -328,8 +393,8 @@ def cagr():
 	overall_index = x.index('Overall')
 	xlabel, ylabel = 'Territory', 'CAGR (%)'
 	title = f'Territory-wise CAGR (%)'
-	fig = create_bar_plot(x, y, xlabel, ylabel, title, ylimit=(26, 29),\
-						width= 0.5, rotation=30, text_offset=0.05,\
+	fig = create_bar_plot(x, y, xlabel, ylabel, title,
+						width= 0.5, rotation=30, 
 						specific_bar_index=overall_index)
 	fig.savefig(f'{upload_folder}/cagr.png', dpi=100)
 
@@ -381,6 +446,11 @@ def most_steady_sales():
 def create_bar_plot(label_list, y, xlabel, ylabel, title, ylimit=(),\
                     width=0.8, rotation=0, bottom=0,text_offset=0,\
 					specific_bar_index=-1, specific_bar_color='r'):
+	min_y, max_y = min(y), max(y)
+	y_int = max_y-min_y
+	if text_offset == 0:
+		text_offset = y_int/30
+
 	fig = plt.figure(figsize=(12,8), dpi=100)
 	ax = fig.add_subplot(111)
 	xrange = list(range(len(label_list)))
@@ -395,6 +465,8 @@ def create_bar_plot(label_list, y, xlabel, ylabel, title, ylimit=(),\
 	plt.grid(linestyle = '--', linewidth = 0.15, color = 'k')
 	if len(ylimit) !=0:
 		plt.ylim(ylimit[0], ylimit[1])
+	else:
+		plt.ylim(min_y-0.3*y_int, max_y+0.3*y_int)
 	for i, j in enumerate(y):
 			ax.text(i, j+text_offset, j, fontsize=15, ha='center')
 	plt.tight_layout()
@@ -446,6 +518,11 @@ def create_multiple_bar_plot(labels, y1, y2, y3, y4, xlabel, ylabel, title, \
 
 def create_line_plot(x, y, xlabel, ylabel, linetype, title,
                      xlimit=(), ylimit=(), rotation=0, text_offset=0):
+	min_y, max_y = min(y), max(y)
+	y_int = max_y-min_y
+	if text_offset == 0:
+		text_offset = y_int/30
+
 	fig = plt.figure(figsize=(12,8), dpi=100)
 	ax = fig.add_subplot(111)
 	plt.plot(range(len(x)), y, linetype, linewidth = 1.5)
@@ -461,6 +538,8 @@ def create_line_plot(x, y, xlabel, ylabel, linetype, title,
 		plt.xlim(xlimit[0], xlimit[1])
 	if len(ylimit) !=0:
 		plt.ylim(ylimit[0], ylimit[1])
+	else:
+		plt.ylim(min_y-0.3*y_int, max_y+0.3*y_int)
 	plt.tight_layout()
 	ax.spines['top'].set_visible(False)
 	ax.spines['right'].set_visible(False)
@@ -517,8 +596,8 @@ def create_multiple_line_plot(x_dict, y_dict, xlabel, ylabel, linetype_list, lab
 def create_pie_plot(x, y, explode, title):
 	fig = plt.figure(figsize=(12,8), dpi=100)
 	ax = fig.add_subplot(111)
-	colors=['dodgerblue', 'yellowgreen', 'plum', 'tomato']
-	ax.pie(y, explode=explode, labels=x, autopct='%1.2f%%', colors=colors,
+	# colors=['dodgerblue', 'yellowgreen', 'plum', 'tomato']
+	ax.pie(y, explode=explode, labels=x, autopct='%1.2f%%', #colors=colors,
 		shadow=True, startangle=0, textprops={'size': 'x-large'})
 	ax.axis('equal')
 	plt.title(title, fontsize=17)

@@ -92,9 +92,9 @@
                     </div>
 
                     <br>
-                    <h3 class="text-center">Top 3 Customers (Territory-wise)</h3>
-                    <br>
-                    <form action="/" method="post" name="territorylist">
+                    <h3 id="territorry_wise_customer" class="text-center">Top 3 Customers (Territory-wise)</h3>
+                    <h4 class="text-center">(Selected Territory : {{selected_territory}})</h4>
+                    <form action="/top_contribution" method="post" name="territorylist">
 						<select id="territoryselect" name="territory" class="cursor-pointer">
 							<option hidden disabled selected value>-- select territory --</option>
 							{% for territory in territory_list %}
@@ -123,16 +123,18 @@
                             </div>
                             {% endfor %}
                         </div>                     
-                        {% for rank in rank_dict['customer'][:3] %}                  
+                        {% for rank in rank_dict['territory_wise_customer'] %}                  
                         <div class="row">
 							<div class="cell" style="font-family: Poppins-Bold;">
                                 Rank {{rank}} <br><br>
                             </div>
                             {% for year in year_list %}
                             <div class="cell">
-                                <div style="font-family: Poppins-Bold;">{{ results['customer'][year][rank-1][0] }}</div>
+                                <div style="font-family: Poppins-Bold;">
+                                    {{ results['territory_wise_customer'][year][rank-1][0] }}
+                                </div>
                                 <br>
-                                {{ (results['customer'][year][rank-1][1])|round(2) }} %
+                                {{ (results['territory_wise_customer'][year][rank-1][1])|round(2) }} %
                                 <a href="" 
                                 style="font-size:12px;" 
 								onclick="window.open('/top_contribution/{{ year }}_customer_{{rank}}.png','newwindow', 
@@ -189,8 +191,86 @@
                         {% endfor %}
                     </div>
 
+                    <br>
+                    <h3 id="territorry_wise_sku" class="text-center">Top 3 SKUs (Territory-wise)</h3>
+                    <h4 class="text-center">(Selected Territory : {{selected_territory2}})</h4>
+                    <form action="/top_contribution" method="post" name="territorylist2">
+						<select id="territoryselect2" name="territory2" class="cursor-pointer">
+							<option hidden disabled selected value>-- select territory --</option>
+							{% for territory in territory_list %}
+                            	<option>{{ territory }}</option>
+                            {% endfor %}
+						</select>
+						<br><br>
+                        <input class="btn btn-primary cursor-pointer" id="territorysubmit2" type="submit" 
+                        value="Submit">
+						<br><br>
+                    </form>
+                    <br>
+                    <div class="table">
+						<div class="row header">
+                            <div class="cell" style="font-size: 16px;">Year &nbsp;&nbsp;
+                                <span class="glyphicon glyphicon-arrow-right"></span>
+                            </div>
+                            {% for year in year_list %}
+                            <div class="cell" style="font-size: 16px;">{{year}} &nbsp;&nbsp;
+                                <a href="" style="font-size:12px;" 
+                                onclick="window.open('/top_contribution/{{ year }}_sku_0.png?territory={{selected_territory2}}',
+                                'newwindow', 'width=700,height=550'); 
+                                return false;">
+                                <span class="glyphicon glyphicon-stats white"></span>
+                                </a>
+                            </div>
+                            {% endfor %}
+                        </div>                     
+                        {% for rank in rank_dict['territory_wise_sku'] %}                  
+                        <div class="row">
+							<div class="cell" style="font-family: Poppins-Bold;">
+                                Rank {{rank}} <br><br>
+                            </div>
+                            {% for year in year_list %}
+                            <div class="cell">
+                                <div style="font-family: Poppins-Bold;">
+                                    {{ results['territory_wise_sku'][year][rank-1][0] }}
+                                </div>
+                                <br>
+                                {{ (results['territory_wise_sku'][year][rank-1][1])|round(2) }} %
+                                <a href="" 
+                                style="font-size:12px;" 
+								onclick="window.open('/top_contribution/{{ year }}_sku_{{rank}}.png','newwindow', 
+                         		'width=700,height=550'); 
+                                  return false;">
+                                <span class="glyphicon glyphicon-stats"></span>  
+                                </a>
+							</div>
+                            {% endfor %}
+                        </div>
+                        {% endfor %}
+                    </div>
+
+
 				</div>
 			</div>
 		</div>
-	</div>
+    </div>
+    <script>
+		$(document).ready(function(){
+			$("#territorysubmit").click(function(){
+				$("#territoryselect").text();
+			});
+		});
+    </script>
+    <script>
+		$(document).ready(function(){
+			$("#territorysubmit2").click(function(){
+				$("#territoryselect2").text();
+			});
+		});
+    </script>
+    {% if scroll %}
+        <script>
+            // document.getElementById('{{ scroll }}').scrollIntoView();
+            document.location.hash = '#' + '{{ scroll }}';
+        </script>
+    {% endif %}
 {% endblock %}

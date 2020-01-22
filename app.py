@@ -4,6 +4,7 @@ import math
 import json
 from datetime import datetime
 import pymysql
+import numpy as np
 import pandas as pd
 import random
 from flask import Flask, render_template, request, session, redirect, Response
@@ -53,21 +54,21 @@ def home():
 	cursor = db.cursor() 
 	current_year = global_data['year_list'][-1]
 	query = '''SELECT num_territories, num_customers, sale_val, 
-		avg_num_invoice_per_month, avg_invoice_val, month_end_skew FROM 
+		avg_num_invoice_per_month, avg_invoice_val, percent_sale_subperiod_4 FROM 
 		company_profile where time_bucket='{}';'''.format(current_year)
 	cursor.execute(query)
 	if request.method=='POST':
 		current_year = request.form['year']
 		query = '''SELECT num_territories, num_customers, sale_val, 
-		avg_num_invoice_per_month, avg_invoice_val, month_end_skew FROM 
+		avg_num_invoice_per_month, avg_invoice_val, percent_sale_subperiod_4 FROM 
 		company_profile where time_bucket='{}';'''.format(current_year)
 		cursor.execute(query)
 	results = list(cursor.fetchall()[0])
 	results[2] = str(round(results[2]/10000000,2))+' Cr'
 	results[-1] = str(results[-1])+' %'
 
-	date_query = '''select max(date) from invoice_order where date<=
-	'{}-12-31';'''.format(current_year)
+	date_query = '''select max(date) from invoice_order where date <=
+	'{}-03-31';'''.format(int(current_year)+1)
 	cursor.execute(date_query)
 	last_invoice_date = cursor.fetchall()[0][0].strftime("%d-%m-%Y")
 	return render_template('index.html', results=results, last_invoice_date=last_invoice_date,
@@ -141,16 +142,17 @@ def home_plot_graph(graph_name):
 		return Response(output.getvalue(), mimetype='image/png')
 
 	elif graph_name[:-5] == 'skew': 
-		query = '''SELECT territory_name, month_end_skew FROM territory_profile 
-		where time_bucket='{}' and time_bucket_type='year' order by month_end_skew desc;
+		query = '''SELECT territory_name, percent_sale_subperiod_1, percent_sale_subperiod_2,
+		percent_sale_subperiod_3, percent_sale_subperiod_4 FROM territory_profile 
+		where time_bucket='{}' and time_bucket_type='year' order by territory_name;
 		'''.format(current_year)
 		cursor.execute(query)
 		results = cursor.fetchall()
-		[x,y] = list(zip(*results))
-		xlabel, ylabel = 'Territory', 'Month end skew (%)'
-		title = 'Territory-wise month end skew in %'
-		fig = create_bar_plot(x, y, xlabel, ylabel, title,ylimit=(30, 46),\
-							  width=0.5, rotation=30, text_offset=0.1)
+		[x, y1, y2, y3, y4] = list(zip(*results))
+		xlabel, ylabel = 'Territory', 'Monthly skew pattern (average) (%)'
+		title = 'Territory-wise monthly skew pattern in %'
+		fig = create_multiple_bar_plot(x, y1, y2, y3, y4, xlabel, ylabel, title,\
+							  width=0.5, rotation=30, text_offset=0.5)
 		output = io.BytesIO()
 		FigureCanvas(fig).print_png(output)
 		return Response(output.getvalue(), mimetype='image/png')
@@ -222,6 +224,13 @@ def top_contribution():
 		time_bucket='{}' order by sale_val desc limit 3;'''.format(total_sale, year)
 		cursor.execute(query_sku)
 		results['sku'][year] = cursor.fetchall()
+
+		# if request.method=='POST':
+		# 	selected_territory = request.form['territory']
+		# 	query = '''select customer_name, sale_val*100/{} from customer_profile where 
+		# 	time_bucket='{}' order by sale_val desc limit 3;
+		# 	'''.format(total_sale, year)
+		# 	cursor.execute(query)
 		
 	rank_dict = {
 		'territory': list(range(1,4)),
@@ -350,7 +359,7 @@ def top_declining_sales():
 	return render_template('slowest_growing_sales.html', results=results, rank_list=rank_list)
 
 
-@app.route("/most_steady_sales", methods=['GET', 'POST'])
+@app.route("/most_regular_invoices", methods=['GET', 'POST'])
 def most_steady_sales():
 	steady_sales_results = {}
 	current_year = global_data['year_list'][-1]
@@ -364,23 +373,23 @@ def most_steady_sales():
 		steady_sales_results['sku'] = get_entity_wise_most_3_steady_sales('sku')[current_year]
 	
 	rank_list = list(range(1,4))
-	return render_template('most_steady_sales.html', results=steady_sales_results, 
+	return render_template('most_regular_invoices.html', results=steady_sales_results, 
 							year_list=global_data['year_list'], current_year=current_year,\
 							rank_list=rank_list)
 
 
-def create_bar_plot(x, y, xlabel, ylabel, title, ylimit=(),\
+def create_bar_plot(label_list, y, xlabel, ylabel, title, ylimit=(),\
                     width=0.8, rotation=0, bottom=0,text_offset=0,\
 					specific_bar_index=-1, specific_bar_color='r'):
 	fig = plt.figure(figsize=(12,8), dpi=100)
 	ax = fig.add_subplot(111)
-	xrange = list(range(len(x)))
+	xrange = list(range(len(label_list)))
 	barlist = plt.bar(xrange, y, width=width, align='center')
 	if specific_bar_index != -1:
 		barlist[specific_bar_index].set_color('r')
-	plt.xticks(xrange, x, fontsize=14, rotation=rotation)
+	plt.xticks(xrange, label_list, fontsize=14, rotation=rotation)
 	plt.yticks(fontsize=14)
-	plt.xlabel(xlabel, fontsize=14);
+	plt.xlabel(xlabel, fontsize=14)
 	plt.ylabel(ylabel, fontsize=14)
 	plt.title(title, fontsize=15)
 	plt.grid(linestyle = '--', linewidth = 0.15, color = 'k')
@@ -395,13 +404,52 @@ def create_bar_plot(x, y, xlabel, ylabel, title, ylimit=(),\
 	ax.spines['left'].set_visible(False)
 	return fig
 
+def create_multiple_bar_plot(labels, y1, y2, y3, y4, xlabel, ylabel, title, \
+                    width=0.5, rotation=0, text_offset=0):
+	fig = plt.figure(figsize=(12,8), dpi=100)
+	ax = fig.add_subplot(111)
+	def autolabel(rects):
+		for rect in rects:
+			height = rect.get_height()
+			ax.annotate('{}'.format(height),
+						xy=(rect.get_x() + rect.get_width() / 2, height),
+						xytext=(0, text_offset), 
+						textcoords="offset points",
+						ha='center', va='bottom')
+
+	x = np.array([3*a for a in range(len(labels))]) # the label locations
+
+	rects1 = ax.bar(x - 3*width/2, y1, width,alpha=0.75, label='Subperiod-1')
+	autolabel(rects1)
+	rects2 = ax.bar(x - width/2, y2, width,alpha=0.75, label='Subperiod-2')
+	autolabel(rects2)
+	rects3 = ax.bar(x + width/2, y3, width,alpha=0.75, label='Subperiod-3')
+	autolabel(rects3)
+	rects4 = ax.bar(x + 3*width/2, y4, width,alpha=0.75, label='Subperiod-4')
+	autolabel(rects4)
+
+	plt.yticks(fontsize=14)
+	ax.set_ylabel(ylabel, fontsize=14)
+	ax.set_title(title, fontsize=14)
+	ax.set_xticks(x)
+	ax.set_xticklabels(labels, rotation=rotation, fontsize=14)
+	ax.legend(loc=0,fontsize=12)
+	plt.grid(linestyle = '--',linewidth = 0.2,color='k')
+
+	fig.tight_layout()
+	ax.spines['top'].set_visible(False)
+	ax.spines['right'].set_visible(False)
+	# ax.spines['bottom'].set_visible(False)
+	ax.spines['left'].set_visible(False)
+	return fig
+
 
 def create_line_plot(x, y, xlabel, ylabel, linetype, title,
                      xlimit=(), ylimit=(), rotation=0, text_offset=0):
 	fig = plt.figure(figsize=(12,8), dpi=100)
 	ax = fig.add_subplot(111)
 	plt.plot(range(len(x)), y, linetype, linewidth = 1.5)
-	plt.xlabel(xlabel, fontsize=14);
+	plt.xlabel(xlabel, fontsize=14)
 	plt.ylabel(ylabel, fontsize=14)
 	plt.title(title, fontsize=15)
 	plt.grid(linestyle = '--', linewidth = 0.2, color = 'k')

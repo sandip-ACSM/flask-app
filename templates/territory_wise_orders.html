@@ -1,0 +1,47 @@
+{% extends "layout.html" %}
+{% block body %}
+	<!-- Page content -->
+	<div class="main">
+		<div class="limiter">
+			<div class="container-table100">
+				<div class="wrap-table100">
+					<h1 class="text-center">Territory-wise Orders</h1>
+                    <h4 class="text-center">Year: {{selected_year}}, Territory: {{selected_territory}}</h4>
+                    <br>
+                    <form action="/territory_wise_orders" method="post" name="yearlist">
+						<select id="yearselect" name="year" class="cursor-pointer">
+							<option hidden disabled selected value>-- select year --</option>
+							{% for year in year_list %}
+                            	<option>{{ year }}</option>
+                            {% endfor %}
+						</select>
+                        &nbsp;&nbsp;
+                        <span>
+                            <select id="territoryselect" name="territory" class="cursor-pointer">
+                                <option hidden disabled selected value>-- select territory --</option>
+                                {% for territory in territory_list %}
+                                    <option>{{ territory }}</option>
+                                {% endfor %}
+                            </select>
+                        </span>
+                        &nbsp;&nbsp;
+						<span>
+							<input class="btn btn-primary cursor-pointer" id="yearsubmit" type="submit" value="Submit">
+						</span>
+					<br><br>
+                    </form>
+                    <img src="{{upload_folder}}/territory_wise_orders_{{selected_year}}.png"  
+                        height="500" width="770">
+                </div>               
+                
+            </div>
+		</div>
+    </div>
+    <script>
+		$(document).ready(function(){
+			$("#yearsubmit").click(function(){
+				$("#yearselect").text();
+			});
+		});
+	</script>
+{% endblock %}

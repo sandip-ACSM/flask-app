@@ -223,6 +223,62 @@ def customer_orders():
 							selected_year=selected_year)
 
 
+@app.route("/territory_wise_orders", methods=['GET', 'POST'])
+def territory_wise_orders():
+	results = {}
+	cursor = db.cursor()
+	selected_year = global_data['year_list'][-1]
+	selected_territory = sorted(global_data['territory_list'])[0]
+	query = '''select time_bucket, round(sale_val/avg_invoice_val) from territory_profile 
+	where time_bucket_type='month' and territory_name='{}' order by time_bucket;
+	'''.format(selected_territory)
+	cursor.execute(query)
+	month_list_results = cursor.fetchall()
+
+	if request.method=='POST':
+		selected_year = request.form['year']
+		selected_territory = request.form['territory']
+		query = '''select time_bucket, round(sale_val/avg_invoice_val) from territory_profile 
+		where time_bucket_type='month' and territory_name='{}' order by time_bucket;
+		'''.format(selected_territory)
+		cursor.execute(query)
+		month_list_results = cursor.fetchall()
+
+	for m,n in (month_list_results):
+		if m[:4] == str(selected_year):
+			results[m[5:]] = n
+	x,y = list(results.keys()),list(results.values())
+	x = [int(a) for a in x]
+	y = [a for _,a in sorted(zip(x,y))]
+	y = [int(a) for a in y]
+	x = ['APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', \
+		'DEC', 'JAN', 'FEB', 'MAR']
+	# x = x[:len(y)]
+	for i in range(12-len(y)):
+		y.append(0)
+	xlabel, ylabel = 'Month', 'Number of orders'
+	title = f'Month-wise plot of number of orders for {selected_territory} in {selected_year} (APR to MAR)'
+	fig = create_bar_plot(x, y, xlabel, ylabel, title, ylimit=(0, max(y)*1.5),\
+							  width=0.5, rotation=30)
+	fig.savefig(f'{upload_folder}/territory_wise_orders_{selected_year}.png', dpi=100)
+
+	
+
+	# [cust_list, avg_order_val_list, avg_num_order_list] = list(zip(*results))
+
+	# xlabel, ylabel = 'Average order value', 'Average order number/month'
+	# title = f'Scatter plot for customer orders in {selected_year}'
+	# fig = create_scatter_plot(avg_order_val_list, avg_num_order_list, 100, xlabel, ylabel, title)
+	# fig.savefig(f'{upload_folder}/territory_wise_orders_{selected_year}.png', dpi=100)
+
+	return render_template('territory_wise_orders.html', \
+							year_list=global_data['year_list'], \
+							territory_list=sorted(global_data['territory_list']),\
+							upload_folder=upload_folder,\
+							selected_year=selected_year,\
+							selected_territory=selected_territory)
+
+
 @app.route("/top_contribution", methods=['GET', 'POST'])
 def top_contribution():
 	results = {
@@ -537,6 +593,7 @@ def create_bar_plot(label_list, y, xlabel, ylabel, title, ylimit=(),\
 	else:
 		plt.ylim(min_y-0.3*y_int, max_y+0.3*y_int)
 	for i, j in enumerate(y):
+		if j != 0:
 			ax.text(i, j+text_offset, j, fontsize=15, ha='center')
 	plt.tight_layout()
 	ax.spines['top'].set_visible(False)

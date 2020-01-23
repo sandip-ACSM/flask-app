@@ -6,7 +6,8 @@
 			<div class="container-table100">
 				<div class="wrap-table100">
 					<h1 class="text-center">Customer Orders</h1>
-                    <h3 class="text-center">Year: {{selected_year}}</h3>
+					<h4 class="text-center">Year: {{selected_year}}, Plot-type: {{selected_plot}}</h4>
+					<br>
                     <form action="/customer_orders" method="post" name="yearlist">
 						<select id="yearselect" name="year" class="cursor-pointer">
 							<option hidden disabled selected value>-- select year --</option>
@@ -16,12 +17,20 @@
 						</select>
 						&nbsp;&nbsp;
 						<span>
+							<select id="plotselect" name="plot" class="cursor-pointer">
+								<option hidden disabled selected value>-- select plot type --</option>
+									<option>Scatter-plot</option>
+									<option>Histogram</option>
+							</select>
+							&nbsp;&nbsp;
+						</span>
+						<span>
 							<input class="btn btn-primary cursor-pointer" id="yearsubmit" type="submit" value="Submit">
 						</span>
 					<br><br>
                     </form>
                     <div>
-                        <img style="margin-left: 140px" src="{{upload_folder}}/customer_orders_{{selected_year}}.png"  
+                        <img style="margin-left: 140px" src="{{upload_folder}}/customer_orders_{{selected_plot}}_{{selected_year}}.png"  
                         height="500" width="500">
 					</div>
 					<br>
@@ -34,6 +43,13 @@
 		$(document).ready(function(){
 			$("#yearsubmit").click(function(){
 				$("#yearselect").text();
+			});
+		});
+	</script>
+	<script>
+		$(document).ready(function(){
+			$("#plotsubmit").click(function(){
+				$("#plotselect").text();
 			});
 		});
 	</script>

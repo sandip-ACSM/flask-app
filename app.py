@@ -197,33 +197,54 @@ def customer_orders():
 	# results = {}
 	cursor = db.cursor()
 	selected_year = global_data['year_list'][-1]
+	selected_plot = 'Scatter-plot'
+
 	query = '''select customer_name, avg_invoice_val, avg_num_invoice_per_month 
 	from customer_profile where time_bucket='{}';
 	'''.format(selected_year)
+
 	cursor.execute(query)
 	results = cursor.fetchall()
-	if request.method=='POST':
-		selected_year = request.form['year']
-		query = '''select customer_name, avg_invoice_val, avg_num_invoice_per_month 
-		from customer_profile where time_bucket='{}';
-		'''.format(selected_year)
-		cursor.execute(query)
-		results = cursor.fetchall()
-
 	[cust_list, avg_order_val_list, avg_num_order_list] = list(zip(*results))
-
 	xlabel, ylabel = 'Average order value', 'Average order number/month'
 	title = f'Scatter plot for customer orders in {selected_year}'
 	fig = create_scatter_plot(avg_order_val_list, avg_num_order_list, 100, xlabel, ylabel, title)
-	fig.savefig(f'{upload_folder}/customer_orders_{selected_year}.png', dpi=100)
 
+	if request.method=='POST':
+		selected_year = request.form['year']
+		selected_plot = request.form['plot']
+
+		if selected_plot == 'Scatter-plot':
+			query = '''select customer_name, avg_invoice_val, avg_num_invoice_per_month 
+			from customer_profile where time_bucket='{}';
+			'''.format(selected_year)
+
+			cursor.execute(query)
+			results = cursor.fetchall()
+			[cust_list, avg_order_val_list, avg_num_order_list] = list(zip(*results))
+			xlabel, ylabel = 'Average order value', 'Average order number/month'
+			title = f'Scatter plot for customer orders in {selected_year}'
+			fig = create_scatter_plot(avg_order_val_list, avg_num_order_list, 100, xlabel, ylabel, title)
+		
+		elif selected_plot == 'Histogram':
+			query = '''select avg_num_invoice_per_month from customer_profile where 
+			time_bucket='{}';'''.format(selected_year)
+			cursor.execute(query)
+			results = list(zip(*cursor.fetchall()))[0]
+			num_bins = 80
+			xlabel, ylabel = 'Average order number/month', 'Number of occurances'
+			title = f'Histogram of monthly customer orders in {selected_year}'
+			fig = create_histogram(results, num_bins, xlabel, ylabel, title)
+	
+	fig.savefig(f'{upload_folder}/customer_orders_{selected_plot}_{selected_year}.png', dpi=100)
 	return render_template('customer_orders.html', \
 							year_list=global_data['year_list'], \
 							upload_folder=upload_folder,\
-							selected_year=selected_year)
+							selected_year=selected_year,
+							selected_plot=selected_plot)
 
 
-@app.route("/territory_wise_orders", methods=['GET', 'POST'])
+@app.route("/territory_wise_order", methods=['GET', 'POST'])
 def territory_wise_orders():
 	results = {}
 	cursor = db.cursor()
@@ -260,16 +281,8 @@ def territory_wise_orders():
 	title = f'Month-wise plot of number of orders for {selected_territory} in {selected_year} (APR to MAR)'
 	fig = create_bar_plot(x, y, xlabel, ylabel, title, ylimit=(0, max(y)*1.5),\
 							  width=0.5, rotation=30)
-	fig.savefig(f'{upload_folder}/territory_wise_orders_{selected_year}.png', dpi=100)
+	fig.savefig(f'{upload_folder}/territory_wise_orders_{selected_territory}_{selected_year}.png', dpi=100)
 
-	
-
-	# [cust_list, avg_order_val_list, avg_num_order_list] = list(zip(*results))
-
-	# xlabel, ylabel = 'Average order value', 'Average order number/month'
-	# title = f'Scatter plot for customer orders in {selected_year}'
-	# fig = create_scatter_plot(avg_order_val_list, avg_num_order_list, 100, xlabel, ylabel, title)
-	# fig.savefig(f'{upload_folder}/territory_wise_orders_{selected_year}.png', dpi=100)
 
 	return render_template('territory_wise_orders.html', \
 							year_list=global_data['year_list'], \
@@ -727,6 +740,26 @@ def create_pie_plot(x, y, explode, title):
 		shadow=True, startangle=0, textprops={'size': 'x-large'})
 	ax.axis('equal')
 	plt.title(title, fontsize=17)
+	return fig
+
+
+def create_histogram(x, num_bins, xlabel, ylabel, title):
+	fig = plt.figure(figsize=(8,8), dpi=100)
+	ax = fig.add_subplot(111)
+	# num_bins = 75
+	n, bins, patches = plt.hist(x, num_bins, facecolor='blue', \
+								alpha=0.65)
+	plt.xlabel(xlabel, fontsize=14)
+	plt.ylabel(ylabel, fontsize=14)
+	plt.title(title, fontsize=16)
+	plt.grid(linestyle='--', linewidth=0.2, color='k')
+	plt.xticks(fontsize=14)
+	plt.yticks(fontsize=14)
+	plt.tight_layout()
+	ax.spines['top'].set_visible(False)
+	ax.spines['right'].set_visible(False)
+	# ax.spines['bottom'].set_visible(False)
+	ax.spines['left'].set_visible(False)
 	return fig
 
 def create_scatter_plot(x, y, size, xlabel, ylabel, title):

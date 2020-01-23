@@ -188,9 +188,39 @@ def seasonality():
 						   global_data['year_list'], title, text_offset=0.3)
 	fig.savefig(f'{upload_folder}/seasonality.png', dpi=100)
 
-	return render_template('seasonality.html', results=results,\
+	return render_template('seasonality.html', \
+							upload_folder=upload_folder)
+
+	
+@app.route("/customer_orders", methods=['GET', 'POST'])
+def customer_orders():
+	# results = {}
+	cursor = db.cursor()
+	selected_year = global_data['year_list'][-1]
+	query = '''select customer_name, avg_invoice_val, avg_num_invoice_per_month 
+	from customer_profile where time_bucket='{}';
+	'''.format(selected_year)
+	cursor.execute(query)
+	results = cursor.fetchall()
+	if request.method=='POST':
+		selected_year = request.form['year']
+		query = '''select customer_name, avg_invoice_val, avg_num_invoice_per_month 
+		from customer_profile where time_bucket='{}';
+		'''.format(selected_year)
+		cursor.execute(query)
+		results = cursor.fetchall()
+
+	[cust_list, avg_order_val_list, avg_num_order_list] = list(zip(*results))
+
+	xlabel, ylabel = 'Average order value', 'Average order number/month'
+	title = f'Scatter plot for customer orders in {selected_year}'
+	fig = create_scatter_plot(avg_order_val_list, avg_num_order_list, 100, xlabel, ylabel, title)
+	fig.savefig(f'{upload_folder}/customer_orders_{selected_year}.png', dpi=100)
+
+	return render_template('customer_orders.html', \
 							year_list=global_data['year_list'], \
-							upload_folder=upload_folder) 
+							upload_folder=upload_folder,\
+							selected_year=selected_year)
 
 
 @app.route("/top_contribution", methods=['GET', 'POST'])
@@ -238,16 +268,22 @@ def top_contribution():
 
 	for year in global_data['year_list']:
 		selected_territory = top_territory_last_year
+		query_total_sale_terr = '''select sale_val from territory_profile where 
+		time_bucket='{}' and territory_name='{}';'''.format(year, selected_territory)
+		cursor.execute(query_total_sale_terr)
+		total_sale_terr = cursor.fetchall()[0][0]
+
 		query_territory_wise_customer = '''select customer_name, sale_val*100/{} from 
 		customer_profile where territory_name='{}' and time_bucket='{}' 
-		order by sale_val desc limit 3;'''.format(total_sale, selected_territory, year)
+		order by sale_val desc limit 3;'''.format(total_sale_terr, selected_territory, year)
 		cursor.execute(query_territory_wise_customer)
 		results['territory_wise_customer'][year] = cursor.fetchall()
 
 		selected_territory2 = top_territory_last_year
+
 		query_territory_wise_sku = '''select sku_name, sale_val*100/{} from 
 		territory_sku_profile where territory_name='{}' and time_bucket='{}' 
-		order by sale_val desc limit 3;'''.format(total_sale, selected_territory2, year)
+		order by sale_val desc limit 3;'''.format(total_sale_terr, selected_territory2, year)
 		cursor.execute(query_territory_wise_sku)
 		results['territory_wise_sku'][year] = cursor.fetchall()
 
@@ -258,9 +294,15 @@ def top_contribution():
 				scroll = 'territorry_wise_customer'
 			except:
 				selected_territory = top_territory_last_year
+
+			query_total_sale_terr = '''select sale_val from territory_profile where 
+			time_bucket='{}' and territory_name='{}';'''.format(year, selected_territory)
+			cursor.execute(query_total_sale_terr)
+			total_sale_terr = cursor.fetchall()[0][0]
+
 			query_territory_wise_customer = '''select customer_name, sale_val*100/{} from 
 			customer_profile where territory_name='{}' and time_bucket='{}' 
-			order by sale_val desc limit 3;'''.format(total_sale,selected_territory, year)
+			order by sale_val desc limit 3;'''.format(total_sale_terr,selected_territory, year)
 			cursor.execute(query_territory_wise_customer)
 			results['territory_wise_customer'][year] = cursor.fetchall()
 
@@ -269,12 +311,19 @@ def top_contribution():
 				scroll = 'territorry_wise_sku'
 			except:
 				selected_territory2 = top_territory_last_year
+
+			query_total_sale_terr = '''select sale_val from territory_profile where 
+			time_bucket='{}' and territory_name='{}';'''.format(year, selected_territory2)
+			cursor.execute(query_total_sale_terr)
+			total_sale_terr2 = cursor.fetchall()[0][0]
+
 			query_territory_wise_sku = '''select sku_name, sale_val*100/{} from 
 			territory_sku_profile where territory_name='{}' and time_bucket='{}' 
-			order by sale_val desc limit 3;'''.format(total_sale, selected_territory2, year)
+			order by sale_val desc limit 3;'''.format(total_sale_terr2, selected_territory2, year)
 			cursor.execute(query_territory_wise_sku)
 			results['territory_wise_sku'][year] = cursor.fetchall()
 
+		
 		global_data['top_contribution'] = results
 		return render_template('top_contribution.html', results=results,\
 						year_list=global_data['year_list'],rank_dict=rank_dict,\
@@ -283,6 +332,7 @@ def top_contribution():
 						selected_territory2=selected_territory2, scroll=scroll)
 	
 	global_data['top_contribution'] = results
+	# print('results', results)
 	return render_template('top_contribution.html', results=results,\
 							year_list=global_data['year_list'],rank_dict=rank_dict,\
 							territory_list=sorted(global_data['territory_list']), 
@@ -296,26 +346,12 @@ def top_contribution_plot_graph(graph_name):
 	entity = graph_name[5:-2]
 	rank = int(graph_name[-1])
 
-	# try:
-	# 	terr_name = request.args['territory']
-	# except:
-	# 	pass
-
 	cursor = db.cursor()
 	query = '''
 	select num_customers, num_skus, num_territories from company_profile where time_bucket='{}'; 
 	'''.format(year)
 	cursor.execute(query)
 	entity_num = cursor.fetchall()[0]
-
-	if request.args['territory']:
-		terr_name = request.args['territory']
-		cursor = db.cursor()
-		query = '''
-		select num_customers, num_skus from territory_profile where time_bucket='{}'
-		and territory_name = '{}';'''.format(year, terr_name)
-		cursor.execute(query)
-		entity_num = cursor.fetchall()[0]
 
 	if rank != 0:
 		# Month-wise analysis
@@ -354,16 +390,49 @@ def top_contribution_plot_graph(graph_name):
 		others_percent = round(100-sum(y), 2)
 		
 		if entity == 'customer':
-			x.append('Other {} customers'.format(entity_num[0]-3))
+			x.append('Other {} customers'.format(entity_num[0]-10))
 		elif entity == 'sku':
 			x.append('Other {} skus'.format(entity_num[1]-3))
-		if entity == 'territory':
+		elif entity == 'territory':
 			x.append('Other {} territories'.format(entity_num[2]-3))
 		y.append(others_percent)
 		title = f'Pie-diagram for sales of {entity} in calender year-{year}'
 		explode = [0.1]*(len(x)-1)
 		explode.append(0)
 		fig = create_pie_plot(x, y, explode, title)
+	
+	if len(request.args) == 1:
+		cursor = db.cursor()
+		terr_name = request.args['territory']
+
+		if entity == 'customer':
+			key_name = 'territory_wise_customer'
+		elif entity == 'sku':
+			key_name = 'territory_wise_sku'
+
+		query = ''' 
+		select num_customers, num_skus from territory_profile where time_bucket='{}'
+		and territory_name='{}';'''.format(year, terr_name)
+		cursor.execute(query)
+		entity_num = cursor.fetchall()[0]
+
+
+		# Overall analysis in pie chart
+		[x,y] = zip(*global_data['top_contribution'][key_name][year])
+		x = list(x)
+		y = [round(a,2) for a in y]
+		others_percent = round(100-sum(y), 2)
+
+		if entity == 'customer':
+			x.append('Other {} customers'.format(entity_num[0]-3))
+		elif entity == 'sku':
+			x.append('Other {} skus'.format(entity_num[1]-3))
+		y.append(others_percent)
+		title = f'Pie-diagram for sales of {entity} within territory {terr_name} in calender year-{year}'
+		explode = [0.1]*(len(x)-1)
+		explode.append(0)
+		fig = create_pie_plot(x, y, explode, title)
+
 	output = io.BytesIO()
 	FigureCanvas(fig).print_png(output)
 	return Response(output.getvalue(), mimetype='image/png')
@@ -601,6 +670,25 @@ def create_pie_plot(x, y, explode, title):
 		shadow=True, startangle=0, textprops={'size': 'x-large'})
 	ax.axis('equal')
 	plt.title(title, fontsize=17)
+	return fig
+
+def create_scatter_plot(x, y, size, xlabel, ylabel, title):
+	fig = plt.figure(figsize=(8,8), dpi=100)
+	ax = fig.add_subplot(111)    
+	plt.scatter(x, y, size, c="b", alpha=0.6, #marker=r'$\clubsuit$',
+				label="Luck", edgecolors='k', linewidths=2)
+	plt.xlabel(xlabel, fontsize=14)
+	plt.ylabel(ylabel, fontsize=14)
+	plt.title(title, fontsize=15)
+	# plt.legend(loc='best')
+	plt.grid(linestyle='--', linewidth=0.2, color='k')
+	plt.xticks(fontsize=14)
+	plt.yticks(fontsize=14)
+	fig.tight_layout()
+	# ax.spines['top'].set_visible(False)
+	# ax.spines['right'].set_visible(False)
+	# ax.spines['bottom'].set_visible(False)
+	# ax.spines['left'].set_visible(False)
 	return fig
 
 

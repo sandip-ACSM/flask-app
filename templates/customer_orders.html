@@ -6,9 +6,9 @@
 			<div class="container-table100">
 				<div class="wrap-table100">
 					<h1 class="text-center">Customer Orders</h1>
-					<h4 class="text-center">Year: {{selected_year}}, Plot-type: {{selected_plot}}</h4>
+					<h4 class="text-center">Year: {{selected_year}}, Plot-type: {{selected_plot}} ({{selected_territory}})</h4>
 					<br>
-                    <form action="/customer_orders" method="post" name="yearlist">
+                    <form action="/customer_orders" method="post" name="list">
 						<select id="yearselect" name="year" class="cursor-pointer">
 							<option hidden disabled selected value>-- select year --</option>
 							{% for year in year_list %}
@@ -25,15 +25,67 @@
 							&nbsp;&nbsp;
 						</span>
 						<span>
-							<input class="btn btn-primary cursor-pointer" id="yearsubmit" type="submit" value="Submit">
+							<select id="territoryselect" name="territory" class="cursor-pointer">
+								<option hidden disabled selected value>-- select territory --</option>
+									<option>Overall</option>
+									{% for territory in territory_list %}
+										<option>{{territory}}</option>
+									{% endfor %}
+							</select>
+							&nbsp;&nbsp;
+						</span>
+						<span>
+							<input class="btn btn-primary cursor-pointer" id="submitvalue" type="submit" value="Submit">
 						</span>
 					<br><br>
                     </form>
                     <div>
-                        <img style="margin-left: 140px" src="{{upload_folder}}/customer_orders_{{selected_plot}}_{{selected_year}}.png"  
+						<img style="margin-left: 140px" 
+						src="{{upload_folder}}/customer_orders_{{selected_plot}}_{{selected_territory}}_{{selected_year}}.png"  
                         height="500" width="500">
 					</div>
 					<br>
+					<h2 class="text-center">Customer Clustering Based on Annual Sales</h2>
+					<br>
+
+					<div class="table">
+						<div class="row header">
+                            <!-- <div class="cell" style="font-size: 16px;">Year &nbsp;&nbsp;
+                                <span class="glyphicon glyphicon-arrow-right"></span>
+                            </div> -->
+							<div class="cell" style="font-size: 16px;">
+								Cluster ID
+							</div>
+							<div class="cell" style="font-size: 16px;">
+								Value range
+							</div>
+							<div class="cell" style="font-size: 16px;">
+								Number of <br>
+								customers
+							</div>
+							<div class="cell" style="font-size: 16px;">
+								Mean value
+                            </div>
+                        </div> 
+						{% for cluster in cluster_list %}
+						<div class="row">
+							<div class="cell" style="font-family: Poppins-Bold;">
+								{{cluster}}
+							</div>
+							<div class="cell">
+								{{(cluster_description[cluster]['lower_limit']/10000000)|round(2)}} Cr - 
+								{{(cluster_description[cluster]['upper_limit']/10000000)|round(2)}} Cr
+							</div>
+							<div class="cell">
+								{{cluster_description[cluster]['num']}}
+							</div>
+							<div class="cell">
+								{{(cluster_description[cluster]['mean']/10000000)|round(2)}} Cr
+							</div>
+						</div>
+						{% endfor %}
+
+					</div>
                 </div>               
                 
             </div>
@@ -41,15 +93,10 @@
     </div>
     <script>
 		$(document).ready(function(){
-			$("#yearsubmit").click(function(){
+			$("#submitvalue").click(function(){
 				$("#yearselect").text();
-			});
-		});
-	</script>
-	<script>
-		$(document).ready(function(){
-			$("#plotsubmit").click(function(){
 				$("#plotselect").text();
+				$("#territoryselect").text();
 			});
 		});
 	</script>

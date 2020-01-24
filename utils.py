@@ -1,9 +1,12 @@
 import math
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
+from statistics import mean, pstdev
 
 def create_bar_plot(label_list, y, xlabel, ylabel, title, ylimit=(),\
-                    width=0.8, rotation=0, bottom=0,text_offset=0,\
+					width=0.8, rotation=0, bottom=0,text_offset=0,\
 					specific_bar_index=-1, specific_bar_color='r'):
 	min_y, max_y = min(y), max(y)
 	y_int = max_y-min_y
@@ -37,7 +40,7 @@ def create_bar_plot(label_list, y, xlabel, ylabel, title, ylimit=(),\
 	return fig
 
 def create_multiple_bar_plot(labels, y1, y2, y3, y4, xlabel, ylabel, title, \
-                    width=0.5, rotation=0, text_offset=0):
+					width=0.5, rotation=0, text_offset=0):
 	fig = plt.figure(figsize=(12,8), dpi=100)
 	ax = fig.add_subplot(111)
 	def autolabel(rects):
@@ -77,7 +80,7 @@ def create_multiple_bar_plot(labels, y1, y2, y3, y4, xlabel, ylabel, title, \
 
 
 def create_line_plot(x, y, xlabel, ylabel, linetype, title,
-                     xlimit=(), ylimit=(), rotation=0, text_offset=0):
+					 xlimit=(), ylimit=(), rotation=0, text_offset=0):
 	min_y, max_y = min(y), max(y)
 	y_int = max_y-min_y
 	if text_offset == 0:
@@ -216,3 +219,65 @@ def calculate_cagr(df):
 
 	cagr = (last_six_months_sale/first_six_months_sale)**(1/(0.5*num_six_months))-1
 	return round(cagr*100,2)
+
+
+def clustering_1D_kmeans(input_dict, n_clusters, random_state):
+	'''
+	This function creates clusters of input data with one variable. The return value
+	is a dictionary with cluster numbers 0,1,2, ... as keys.
+
+	Input parameters:
+
+	1. input_dict: A dict containing the input data with format:
+			input_dict = {
+				'entity_1': 23,
+				'entity_2': 32,
+				...
+			}
+	2. n_clusters: Number of required clusters
+	3. random_state: A random state value required for kmeans clustering.
+	'''
+	intput_values = [[x] for x in input_dict.values()]
+	X = np.array(intput_values)
+	kmeans = KMeans(n_clusters=n_clusters, random_state=random_state).fit(X)
+	cluster_dict = {}
+	for i,j in zip(list(input_dict.keys()), kmeans.labels_):
+		try:
+			cluster_dict['Cluster_'+str(j)].append(i)
+		except:
+			cluster_dict['Cluster_'+str(j)] = [i]
+	return cluster_dict
+
+def describe_cluster(cluster_dict, input_dict):
+	'''
+	This function returns the upperlimit, lower limit, mean and standard deviation
+	results for each cluster in form of a dict:
+
+	result_dict = {
+		'cluster_1': {
+			'num': ...,
+			'upper_limit': ...,
+			'lower_limit': ...,
+			'mean': ...,
+			'sd': ...
+		},
+		'cluster_2': {
+			.num': ...,
+			'upper_limit': ...,
+			'lower_limit': ...,
+			'mean': ...,
+			'sd': ...
+		},
+		...
+	}
+	'''
+	result_dict = {}
+	for key in cluster_dict.keys():
+		result_dict[key] = {}
+		tmp_list = [input_dict[x] for x in cluster_dict[key]]
+		result_dict[key]['num'] = len(tmp_list)
+		result_dict[key]['upper_limit'] = round(max(tmp_list),2)
+		result_dict[key]['lower_limit'] = round(min(tmp_list),2)
+		result_dict[key]['mean'] = round(mean(tmp_list),2)
+		result_dict[key]['sd'] = round(pstdev(tmp_list),2)
+	return result_dict

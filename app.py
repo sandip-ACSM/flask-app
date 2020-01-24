@@ -196,9 +196,12 @@ def seasonality():
 @app.route("/customer_orders", methods=['GET', 'POST'])
 def customer_orders():
 	# results = {}
+	territory_list=global_data['territory_list']
+	# territory_list.append('Overall')
 	cursor = db.cursor()
 	selected_year = global_data['year_list'][-1]
 	selected_plot = 'Scatter-plot'
+	selected_territory = 'Overall'
 
 	query = '''select customer_name, avg_invoice_val, avg_num_invoice_per_month 
 	from customer_profile where time_bucket='{}';
@@ -208,28 +211,39 @@ def customer_orders():
 	results = cursor.fetchall()
 	[cust_list, avg_order_val_list, avg_num_order_list] = list(zip(*results))
 	xlabel, ylabel = 'Average order value', 'Average order number/month'
-	title = f'Scatter plot for customer orders in {selected_year}'
+	title = f'Scatter plot for customer orders in {selected_year} (Overall)'
 	fig = create_scatter_plot(avg_order_val_list, avg_num_order_list, 100, xlabel, ylabel, title)
 
 	if request.method=='POST':
+		# print(request.form)
 		selected_year = request.form['year']
 		selected_plot = request.form['plot']
+		selected_territory = request.form['territory']
 
 		if selected_plot == 'Scatter-plot':
-			query = '''select customer_name, avg_invoice_val, avg_num_invoice_per_month 
-			from customer_profile where time_bucket='{}';
-			'''.format(selected_year)
+			if selected_territory == 'Overall':
+				query = '''select customer_name, avg_invoice_val, avg_num_invoice_per_month 
+				from customer_profile where time_bucket='{}';
+				'''.format(selected_year)
+			else:
+				query = '''select customer_name, avg_invoice_val, avg_num_invoice_per_month 
+				from customer_profile where time_bucket='{}' and territory_name='{}';
+				'''.format(selected_year, selected_territory)
 
 			cursor.execute(query)
 			results = cursor.fetchall()
 			[cust_list, avg_order_val_list, avg_num_order_list] = list(zip(*results))
 			xlabel, ylabel = 'Average order value', 'Average order number/month'
-			title = f'Scatter plot for customer orders in {selected_year}'
+			title = f'Scatter plot for customer orders in {selected_year} ({selected_territory})'
 			fig = create_scatter_plot(avg_order_val_list, avg_num_order_list, 100, xlabel, ylabel, title)
 		
 		elif selected_plot == 'Histogram':
-			query = '''select avg_num_invoice_per_month from customer_profile where 
-			time_bucket='{}';'''.format(selected_year)
+			if selected_territory == 'Overall':
+				query = '''select avg_num_invoice_per_month from customer_profile where 
+				time_bucket='{}';'''.format(selected_year)
+			else:
+				query = '''select avg_num_invoice_per_month from customer_profile where 
+				time_bucket='{}' and territory_name='{}';'''.format(selected_year, selected_territory)
 			cursor.execute(query)
 			results = list(zip(*cursor.fetchall()))[0]
 			num_bins = 80
@@ -237,15 +251,23 @@ def customer_orders():
 			title = f'Histogram of monthly customer orders in {selected_year}'
 			fig = create_histogram(results, num_bins, xlabel, ylabel, title)
 	
-	fig.savefig(f'{upload_folder}/customer_orders_{selected_plot}_{selected_year}.png', dpi=100)
+	fig.savefig(f'{upload_folder}/customer_orders_{selected_plot}_{selected_territory}_{selected_year}.png', \
+				dpi=100)
+
+	customer_cluster_dict, cluster_description_dict = calc_cluster_of_customers(3)
+
 	return render_template('customer_orders.html', \
 							year_list=global_data['year_list'], \
+							territory_list=territory_list,\
 							upload_folder=upload_folder,\
 							selected_year=selected_year,
-							selected_plot=selected_plot)
+							selected_plot=selected_plot, 
+							selected_territory=selected_territory,\
+							cluster_list=sorted(list(customer_cluster_dict.keys())), 
+							cluster_description=cluster_description_dict)
 
 
-@app.route("/territory_wise_order", methods=['GET', 'POST'])
+@app.route("/territory_wise_orders", methods=['GET', 'POST'])
 def territory_wise_orders():
 	results = {}
 	cursor = db.cursor()
@@ -613,6 +635,18 @@ def get_entity_wise_most_3_steady_sales(entity_type):
 			entity_dict[year].append([entity_name, sd_value])
 	return entity_dict
 
+
+def calc_cluster_of_customers(n_clusters):
+	query = '''
+	SELECT customer_name, sum(sale_val) as total_sale FROM customer_profile 
+	where time_bucket_type='year' GROUP BY customer_name;'''
+	df = pd.read_sql(query, db)
+	cust_sale_dict = df.set_index('customer_name')['total_sale'].to_dict()
+	customer_cluster_dict = clustering_1D_kmeans(cust_sale_dict, \
+							n_clusters=n_clusters, random_state=42)
+	cluster_description_dict = describe_cluster(customer_cluster_dict, \
+									cust_sale_dict)
+	return (customer_cluster_dict, cluster_description_dict)
 
 if __name__ == '__main__':
 	app.run(debug=True)

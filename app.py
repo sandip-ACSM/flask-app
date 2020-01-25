@@ -27,6 +27,11 @@ db_name = config['database']['db_name']
 
 upload_folder = config['upload_folder']['location']
 
+def get_list_from_db(query):
+	cursor = db.cursor()
+	cursor.execute(query)
+	result_list = cursor.fetchall()
+	return list(zip(*result_list))[0]
 
 app = Flask(__name__)
 global_data = {}
@@ -39,15 +44,16 @@ year_list_query = '''
 territory_list_query = '''
 	select distinct territory_name from territory_profile;
 	'''
-cursor1 = db.cursor()
-cursor1.execute(year_list_query)
-year_list_results = cursor1.fetchall()
-global_data['year_list'] = list(zip(*year_list_results))[0]
-
-cursor1 = db.cursor()
-cursor1.execute(territory_list_query)
-territory_list_results = cursor1.fetchall()
-global_data['territory_list'] = list(zip(*territory_list_results))[0]
+customer_list_query = '''
+	select distinct customer_name from customer_profile;
+	'''
+sku_list_query = '''
+	select distinct sku_name from sku_profile;
+	'''
+global_data['year_list'] = get_list_from_db(year_list_query)
+global_data['territory_list'] = get_list_from_db(territory_list_query)
+global_data['customer_list'] = get_list_from_db(customer_list_query)
+global_data['sku_list'] = get_list_from_db(sku_list_query)
 
 
 @app.route("/", methods=['GET', 'POST'])
@@ -250,12 +256,28 @@ def customer_orders():
 			xlabel, ylabel = 'Average order number/month', 'Number of occurances'
 			title = f'Histogram of monthly customer orders in {selected_year}'
 			fig = create_histogram(results, num_bins, xlabel, ylabel, title)
+
+		elif selected_plot == 'Histogram (Total Sale)':
+			if selected_territory == 'Overall':
+				query = '''SELECT sum(sale_val) as total_sale FROM customer_profile 
+				where time_bucket='{}' GROUP BY customer_name;'''.format(selected_year)
+			else:
+				query = '''SELECT sum(sale_val) as total_sale FROM customer_profile 
+				where time_bucket='{}' and territory_name='{}' GROUP BY customer_name;
+				'''.format(selected_year, selected_territory)
+			cursor.execute(query)
+			results = list(zip(*cursor.fetchall()))[0]
+			results = [round(x/10000000,2) for x in results]
+			num_bins = 50
+			xlabel, ylabel = 'Total sale', 'Number of occurances'
+			title = f'Histogram of customer sale in {selected_year}'
+			fig = create_histogram(results, num_bins, xlabel, ylabel, title)
 	
 	fig.savefig(f'{upload_folder}/customer_orders_{selected_plot}_{selected_territory}_{selected_year}.png', \
 				dpi=100)
 
-	customer_cluster_dict, cluster_description_dict = calc_cluster_of_customers(3)
-
+	customer_cluster_dict, cluster_description_dict = calc_cluster_of_entities(entity_type='customer')
+	
 	return render_template('customer_orders.html', \
 							year_list=global_data['year_list'], \
 							territory_list=territory_list,\
@@ -297,7 +319,6 @@ def territory_wise_orders():
 	y = [int(a) for a in y]
 	x = ['APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', \
 		'DEC', 'JAN', 'FEB', 'MAR']
-	# x = x[:len(y)]
 	for i in range(12-len(y)):
 		y.append(0)
 	xlabel, ylabel = 'Month', 'Number of orders'
@@ -306,13 +327,126 @@ def territory_wise_orders():
 							  width=0.5, rotation=30)
 	fig.savefig(f'{upload_folder}/territory_wise_orders_{selected_territory}_{selected_year}.png', dpi=100)
 
-
 	return render_template('territory_wise_orders.html', \
 							year_list=global_data['year_list'], \
 							territory_list=sorted(global_data['territory_list']),\
 							upload_folder=upload_folder,\
 							selected_year=selected_year,\
 							selected_territory=selected_territory)
+
+
+@app.route("/customer_coverage", methods=['GET', 'POST'])
+def customer_coverage():
+	results = {}
+	total_num_customers = len(global_data['customer_list'])
+	# terriotry_customer_dict = {}
+	# for t in global_data['territory_list']:
+
+	cursor = db.cursor()
+	selected_year = global_data['year_list'][-1]
+	selected_territory = 'Overall'
+	query = '''select time_bucket, round(num_customers/{}, 2) from company_profile 
+	where time_bucket_type='month' order by time_bucket;
+	'''.format(total_num_customers)
+	cursor.execute(query)
+	month_list_results = cursor.fetchall()
+
+	if request.method=='POST':
+		selected_year = request.form['year']
+		selected_territory = request.form['territory']
+		
+		if selected_territory == 'Overall':
+			query1 = '''select time_bucket, round(num_customers/{}, 2) from company_profile 
+			where time_bucket_type='month' order by time_bucket;
+			'''.format(total_num_customers)
+		else:
+			query = '''select num_customers from territory_profile where territory_name='{}' 
+			and time_bucket_type='year';
+			'''.format(selected_territory)
+			cursor.execute(query)
+			selected_territory_num_cust = cursor.fetchall()[0][0]
+
+			query1 = '''select time_bucket, round(num_customers/{},2) from territory_profile 
+			where time_bucket_type='month' and territory_name='{}' order by time_bucket;
+			'''.format(selected_territory_num_cust, selected_territory)
+
+		cursor.execute(query1)
+		month_list_results = cursor.fetchall()
+
+	for m,n in (month_list_results):
+		if m[:4] == str(selected_year):
+			results[m[5:]] = n
+	x,y = list(results.keys()),list(results.values())
+	
+	x = [int(a) for a in x]
+	y = [float(a) for a in y]
+
+	y = [a for _,a in sorted(zip(x,y))]
+	x = ['APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', \
+		'DEC', 'JAN', 'FEB', 'MAR']
+	for i in range(12-len(y)):
+		y.append(0.0)
+	xlabel, ylabel = 'Month', 'Number of orders'
+	title = f'Month-wise {selected_territory} coverage in {selected_year} (APR to MAR)'
+	
+	fig = create_bar_plot(x, y, xlabel, ylabel, title, ylimit=(0, max(y)*1.5),\
+							  width=0.5, rotation=30)
+	fig.savefig(f'{upload_folder}/customer_coverage_{selected_territory}_{selected_year}.png', dpi=100)
+
+	return render_template('customer_coverage.html', \
+							year_list=global_data['year_list'], \
+							territory_list=sorted(global_data['territory_list']),\
+							upload_folder=upload_folder,\
+							selected_year=selected_year,\
+							selected_territory=selected_territory)
+
+
+@app.route("/sku_wise_orders", methods=['GET', 'POST'])
+def sku_wise_orders():
+	results = {}
+	cursor = db.cursor()
+	selected_year = global_data['year_list'][-1]
+	selected_sku = sorted(global_data['sku_list'])[0]
+	query = '''select time_bucket, round(sale_val/avg_invoice_val) from sku_profile 
+	where time_bucket_type='month' and sku_name='{}' order by time_bucket;
+	'''.format(selected_sku)
+	cursor.execute(query)
+	month_list_results = cursor.fetchall()
+
+	if request.method=='POST':
+		selected_year, selected_sku = request.form['year'], request.form['sku']
+		query = '''select time_bucket, round(sale_val/avg_invoice_val) from sku_profile 
+		where time_bucket_type='month' and sku_name='{}' order by time_bucket;
+		'''.format(selected_sku)
+		cursor.execute(query)
+		month_list_results = cursor.fetchall()
+
+	for m,n in (month_list_results):
+		if m[:4] == str(selected_year):
+			results[m[5:]] = n
+	x,y = list(results.keys()),list(results.values())
+	x = [int(a) for a in x]
+	y = [a for _,a in sorted(zip(x,y))]
+	y = [int(a) for a in y]
+	x = ['APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC','JAN','FEB','MAR']
+	for i in range(12-len(y)):
+		y.append(0)
+	xlabel, ylabel = 'Month', 'Number of orders'
+	title = f'Month-wise plot of number of orders for {selected_sku} in {selected_year} (APR to MAR)'
+	fig = create_bar_plot(x, y, xlabel, ylabel, title, ylimit=(0, max(y)*1.5),\
+							  width=0.5, rotation=30)
+	fig.savefig(f'{upload_folder}/sku_wise_orders_{selected_sku}_{selected_year}.png', dpi=100)
+
+	sku_cluster_dict, cluster_description_dict = calc_cluster_of_entities(entity_type='sku')
+		
+	return render_template('sku_wise_orders.html', \
+							year_list=global_data['year_list'], \
+							sku_list=sorted(global_data['sku_list']),\
+							upload_folder=upload_folder,\
+							selected_year=selected_year,\
+							selected_sku=selected_sku,
+							cluster_list=sorted(list(sku_cluster_dict.keys())), 
+							cluster_description=cluster_description_dict)
 
 
 @app.route("/top_contribution", methods=['GET', 'POST'])
@@ -636,17 +770,37 @@ def get_entity_wise_most_3_steady_sales(entity_type):
 	return entity_dict
 
 
-def calc_cluster_of_customers(n_clusters):
+def calc_cluster_of_entities(entity_type='customer'):
+	'''
+	Necessary input:
+
+	1. n_clusters: Required number of clusters
+	2. entity_type: 'customer'/'sku'
+	'''
+	n_clusters_list = [2,3,4,5,6]
 	query = '''
-	SELECT customer_name, sum(sale_val) as total_sale FROM customer_profile 
-	where time_bucket_type='year' GROUP BY customer_name;'''
+	SELECT {}_name, sum(sale_val) as total_sale FROM {}_profile 
+	where time_bucket_type='year' GROUP BY {}_name;
+	'''.format(entity_type, entity_type, entity_type)
 	df = pd.read_sql(query, db)
-	cust_sale_dict = df.set_index('customer_name')['total_sale'].to_dict()
-	customer_cluster_dict = clustering_1D_kmeans(cust_sale_dict, \
-							n_clusters=n_clusters, random_state=42)
-	cluster_description_dict = describe_cluster(customer_cluster_dict, \
-									cust_sale_dict)
-	return (customer_cluster_dict, cluster_description_dict)
+	entity_sale_dict = df.set_index(f'{entity_type}_name')['total_sale'].to_dict()
+	cluster_score_list = []
+	for n_clusters in n_clusters_list:
+		entity_cluster_dict, cluster_centre_dict = clustering_1D_kmeans(entity_sale_dict, \
+								n_clusters=n_clusters, random_state=42)
+		_, score = calculate_cluster_distance_and_score(entity_sale_dict,entity_cluster_dict, \
+			cluster_centre_dict)
+		cluster_score_list.append(score)
+
+	kneedle = KneeLocator(n_clusters_list, cluster_score_list, S=1.0, \
+						  curve='convex', direction='decreasing')
+	opt_n_clusters = round(kneedle.knee)
+
+	opt_entity_cluster_dict, _ = clustering_1D_kmeans(entity_sale_dict, \
+								n_clusters=opt_n_clusters, random_state=42)
+	opt_cluster_description_dict = describe_cluster(opt_entity_cluster_dict, \
+									entity_sale_dict)
+	return (opt_entity_cluster_dict, opt_cluster_description_dict)
 
 if __name__ == '__main__':
 	app.run(debug=True)

@@ -4,6 +4,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
 from statistics import mean, pstdev
+from scipy.spatial import distance
+from kneed import KneeLocator
 
 def create_bar_plot(label_list, y, xlabel, ylabel, title, ylimit=(),\
 					width=0.8, rotation=0, bottom=0,text_offset=0,\
@@ -246,7 +248,33 @@ def clustering_1D_kmeans(input_dict, n_clusters, random_state):
 			cluster_dict['Cluster_'+str(j)].append(i)
 		except:
 			cluster_dict['Cluster_'+str(j)] = [i]
-	return cluster_dict
+
+	# Cluster centres
+	cluster_centre_dict = {}
+	for key in cluster_dict.keys():
+		tmp_list = [input_dict[x] for x in cluster_dict[key]]
+		cluster_centre_dict[key] = mean(tmp_list)
+	return (cluster_dict, cluster_centre_dict)
+
+
+def calculate_cluster_distance_and_score(input_dict, cluster_dict, cluster_centre_dict):
+	'''
+	This function takes a dataframe in which the purchases of customers are presented in a tabular form
+	with customers along the rows and skus along the columns, the set of clusters (in form of dict) and 
+	cluster_centres as inputs and calculates the distance of each customers from its corresponding 
+	cluster centres and returns the values as a dict.
+	'''
+	cluster_distance_dict = {}
+	score_list = []
+	for k in cluster_dict.keys():
+		cluster_distance_dict[k] = []
+		for j in cluster_dict[k]:
+			cluster_distance_dict[k].append(euclidean_distance(input_dict[j],\
+										cluster_centre_dict[k]))
+		score_list = score_list + cluster_distance_dict[k]
+		score = mean(score_list)
+	return (cluster_distance_dict, score)
+
 
 def describe_cluster(cluster_dict, input_dict):
 	'''
@@ -281,3 +309,7 @@ def describe_cluster(cluster_dict, input_dict):
 		result_dict[key]['mean'] = round(mean(tmp_list),2)
 		result_dict[key]['sd'] = round(pstdev(tmp_list),2)
 	return result_dict
+
+def euclidean_distance(x,y):
+	dist = distance.euclidean(x, y)
+	return dist

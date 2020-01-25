@@ -8,7 +8,7 @@
 					<h1 class="text-center">Territory-wise Orders</h1>
                     <h4 class="text-center">Year: {{selected_year}}, Territory: {{selected_territory}}</h4>
                     <br>
-                    <form action="/territory_wise_orders" method="post" name="yearlist">
+                    <form action="/customer_coverage" method="post" name="yearlist">
 						<select id="yearselect" name="year" class="cursor-pointer">
 							<option hidden disabled selected value>-- select year --</option>
 							{% for year in year_list %}
@@ -19,6 +19,7 @@
                         <span>
                             <select id="territoryselect" name="territory" class="cursor-pointer">
                                 <option hidden disabled selected value>-- select territory --</option>
+                                <option>Overall</option>
                                 {% for territory in territory_list %}
                                     <option>{{ territory }}</option>
                                 {% endfor %}
@@ -30,7 +31,7 @@
 						</span>
 					<br><br>
                     </form>
-                    <img src="{{upload_folder}}/territory_wise_orders_{{selected_territory}}_{{selected_year}}.png"  
+                    <img src="{{upload_folder}}/customer_coverage_{{selected_territory}}_{{selected_year}}.png"  
                         height="500" width="770">
                 </div>               
                 

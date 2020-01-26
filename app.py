@@ -88,7 +88,7 @@ def home_plot_graph(graph_name):
 	current_year = graph_name[-4:]
 	if graph_name[:-5] == 'cust_num':
 		query = '''SELECT territory_name, num_customers FROM territory_profile 
-		where time_bucket='{}' and time_bucket_type='year' order by num_customers desc;
+		where time_bucket='{}' order by num_customers desc;
 		'''.format(current_year)
 		cursor.execute(query)
 		results = cursor.fetchall()
@@ -97,13 +97,10 @@ def home_plot_graph(graph_name):
 		title = 'Territory-wise Customer number'
 		fig = create_bar_plot(x, y, xlabel, ylabel, title, # ylimit=(0, 25),\
 							  width=0.5, rotation=30)
-		output = io.BytesIO()
-		FigureCanvas(fig).print_png(output)
-		return Response(output.getvalue(), mimetype='image/png')
 
 	elif graph_name[:-5] == 'sale':
 		query = '''SELECT territory_name, sale_val FROM territory_profile 
-		where time_bucket='{}' and time_bucket_type='year' order by sale_val desc;
+		where time_bucket='{}' order by sale_val desc;
 		'''.format(current_year)
 		cursor.execute(query)
 		results = cursor.fetchall()
@@ -113,13 +110,10 @@ def home_plot_graph(graph_name):
 		title = 'Territory-wise sales in Crores'
 		fig = create_bar_plot(x, y, xlabel, ylabel, title, # ylimit=(4, 13),\
 							  width=0.5, rotation=30)
-		output = io.BytesIO()
-		FigureCanvas(fig).print_png(output)
-		return Response(output.getvalue(), mimetype='image/png')
 
 	elif graph_name[:-5] == 'avg_invoice_num': 
 		query = '''SELECT territory_name, avg_num_invoice_per_month FROM territory_profile 
-		where time_bucket='{}' and time_bucket_type='year' order by avg_num_invoice_per_month desc;
+		where time_bucket='{}' order by avg_num_invoice_per_month desc;
 		'''.format(current_year)
 		cursor.execute(query)
 		results = cursor.fetchall()
@@ -128,14 +122,10 @@ def home_plot_graph(graph_name):
 		title = 'Territory-wise avg. number of invoices/month'
 		fig = create_bar_plot(x, y, xlabel, ylabel, title, # ylimit=(60, 110),\
 							  width=0.5, rotation=30)
-		output = io.BytesIO()
-		FigureCanvas(fig).print_png(output)
-		return Response(output.getvalue(), mimetype='image/png')
-
 
 	elif graph_name[:-5] == 'avg_invoice_val': 
 		query = '''SELECT territory_name, avg_invoice_val FROM territory_profile 
-		where time_bucket='{}' and time_bucket_type='year' order by avg_invoice_val desc;
+		where time_bucket='{}' order by avg_invoice_val desc;
 		'''.format(current_year)
 		cursor.execute(query)
 		results = cursor.fetchall()
@@ -144,14 +134,11 @@ def home_plot_graph(graph_name):
 		title = 'Territory-wise average invoice value'
 		fig = create_bar_plot(x, y, xlabel, ylabel, title, # ylimit=(88000, 102500),\
 							  width=0.5, rotation=30)
-		output = io.BytesIO()
-		FigureCanvas(fig).print_png(output)
-		return Response(output.getvalue(), mimetype='image/png')
 
-	elif graph_name[:-5] == 'skew': 
+	elif graph_name[:-5] == 'skew_orderby_sale': 
 		query = '''SELECT territory_name, percent_sale_subperiod_1, percent_sale_subperiod_2,
 		percent_sale_subperiod_3, percent_sale_subperiod_4 FROM territory_profile 
-		where time_bucket='{}' and time_bucket_type='year' order by territory_name;
+		where time_bucket='{}' and time_bucket_type='year' order by sale_val desc;
 		'''.format(current_year)
 		cursor.execute(query)
 		results = cursor.fetchall()
@@ -160,9 +147,22 @@ def home_plot_graph(graph_name):
 		title = 'Territory-wise monthly skew pattern in %'
 		fig = create_multiple_bar_plot(x, y1, y2, y3, y4, xlabel, ylabel, title,\
 							  width=0.5, rotation=30)
-		output = io.BytesIO()
-		FigureCanvas(fig).print_png(output)
-		return Response(output.getvalue(), mimetype='image/png')
+
+	elif graph_name[:-5] == 'skew_orderby_skew': 
+		query = '''SELECT territory_name, percent_sale_subperiod_1, percent_sale_subperiod_2,
+		percent_sale_subperiod_3, percent_sale_subperiod_4 FROM territory_profile 
+		where time_bucket='{}' and time_bucket_type='year' order by percent_sale_subperiod_4 desc;
+		'''.format(current_year)
+		cursor.execute(query)
+		results = cursor.fetchall()
+		[x, y1, y2, y3, y4] = list(zip(*results))
+		xlabel, ylabel = 'Territory', 'Monthly skew pattern (average) (%)'
+		title = 'Territory-wise monthly skew pattern in %'
+		fig = create_multiple_bar_plot(x, y1, y2, y3, y4, xlabel, ylabel, title,\
+							  width=0.5, rotation=30)
+	output = io.BytesIO()
+	FigureCanvas(fig).print_png(output)
+	return Response(output.getvalue(), mimetype='image/png')
 
 
 @app.route("/seasonality", methods=['GET', 'POST'])
@@ -387,7 +387,7 @@ def customer_coverage():
 	for i in range(12-len(y)):
 		y.append(0.0)
 	xlabel, ylabel = 'Month', 'Number of orders'
-	title = f'Month-wise {selected_territory} coverage in {selected_year} (APR to MAR)'
+	title = f'Month-wise {selected_territory} customer coverage in {selected_year} (APR to MAR)'
 	
 	fig = create_bar_plot(x, y, xlabel, ylabel, title, ylimit=(0, max(y)*1.5),\
 							  width=0.5, rotation=30)
@@ -407,6 +407,7 @@ def sku_wise_orders():
 	cursor = db.cursor()
 	selected_year = global_data['year_list'][-1]
 	selected_sku = sorted(global_data['sku_list'])[0]
+	selected_territory = 'Overall'
 	query = '''select time_bucket, round(sale_val/avg_invoice_val) from sku_profile 
 	where time_bucket_type='month' and sku_name='{}' order by time_bucket;
 	'''.format(selected_sku)
@@ -414,10 +415,18 @@ def sku_wise_orders():
 	month_list_results = cursor.fetchall()
 
 	if request.method=='POST':
-		selected_year, selected_sku = request.form['year'], request.form['sku']
-		query = '''select time_bucket, round(sale_val/avg_invoice_val) from sku_profile 
-		where time_bucket_type='month' and sku_name='{}' order by time_bucket;
-		'''.format(selected_sku)
+		selected_year = request.form['year']
+		selected_sku = request.form['sku']
+		selected_territory = request.form['territory']
+		if selected_territory == 'Overall':
+			query = '''select time_bucket, round(sale_val/avg_invoice_val) from sku_profile 
+			where time_bucket_type='month' and sku_name='{}' order by time_bucket;
+			'''.format(selected_sku)
+		else:
+			query = '''select time_bucket, round(sale_val/avg_invoice_val) from 
+			territory_sku_profile where time_bucket_type='month' and sku_name='{}' 
+			and territory_name='{}' order by time_bucket;
+			'''.format(selected_sku, selected_territory)
 		cursor.execute(query)
 		month_list_results = cursor.fetchall()
 
@@ -432,7 +441,7 @@ def sku_wise_orders():
 	for i in range(12-len(y)):
 		y.append(0)
 	xlabel, ylabel = 'Month', 'Number of orders'
-	title = f'Month-wise plot of number of orders for {selected_sku} in {selected_year} (APR to MAR)'
+	title = f'Month-wise plot of number of orders for {selected_sku} in {selected_year} ({selected_territory})'
 	fig = create_bar_plot(x, y, xlabel, ylabel, title, ylimit=(0, max(y)*1.5),\
 							  width=0.5, rotation=30)
 	fig.savefig(f'{upload_folder}/sku_wise_orders_{selected_sku}_{selected_year}.png', dpi=100)
@@ -442,9 +451,11 @@ def sku_wise_orders():
 	return render_template('sku_wise_orders.html', \
 							year_list=global_data['year_list'], \
 							sku_list=sorted(global_data['sku_list']),\
+							territory_list=sorted(global_data['territory_list']),\
 							upload_folder=upload_folder,\
 							selected_year=selected_year,\
 							selected_sku=selected_sku,
+							selected_territory=selected_territory,
 							cluster_list=sorted(list(sku_cluster_dict.keys())), 
 							cluster_description=cluster_description_dict)
 

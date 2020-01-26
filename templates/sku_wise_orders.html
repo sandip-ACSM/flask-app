@@ -25,6 +25,16 @@
                             </select>
                         </span>
                         &nbsp;&nbsp;
+                        <span>
+                            <select id="territoryselect" name="territory" class="cursor-pointer">
+                                <option hidden disabled selected value>-- select territory --</option>
+                                <option>Overall</option>
+                                {% for territory in territory_list %}
+                                    <option>{{ territory }}</option>
+                                {% endfor %}
+                            </select>
+                        </span>
+                        &nbsp;&nbsp;
 						<span>
 							<input class="btn btn-primary cursor-pointer" id="yearsubmit" type="submit" value="Submit">
 						</span>
@@ -83,6 +93,8 @@
 		$(document).ready(function(){
 			$("#yearsubmit").click(function(){
 				$("#yearselect").text();
+                $("#skuselect").text();
+                $("#territoryselect").text();
 			});
 		});
 	</script>

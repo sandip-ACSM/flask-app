@@ -43,47 +43,6 @@
                     <img src="{{upload_folder}}/sku_wise_orders_{{selected_sku}}_{{selected_territory}}_{{selected_year}}.png"  
                         height="500" width="770">
                 
-                    <br><br><br>
-                    <h2 class="text-center">SKU Clustering Based on Total Sales</h2>
-                    <br>
-                    <div class="table">
-                        <div class="row header">
-                            <!-- <div class="cell" style="font-size: 16px;">Year &nbsp;&nbsp;
-                                <span class="glyphicon glyphicon-arrow-right"></span>
-                            </div> -->
-                            <div class="cell" style="font-size: 16px;">
-                                Cluster ID
-                            </div>
-                            <div class="cell" style="font-size: 16px;">
-                                Value range
-                            </div>
-                            <div class="cell" style="font-size: 16px;">
-                                Number of <br>
-                                SKUs
-                            </div>
-                            <div class="cell" style="font-size: 16px;">
-                                Mean value
-                            </div>
-                        </div> 
-                        {% for cluster in cluster_list %}
-                        <div class="row">
-                            <div class="cell" style="font-family: Poppins-Bold;">
-                                {{cluster}}
-                            </div>
-                            <div class="cell">
-                                {{(cluster_description[cluster]['lower_limit']/10000000)|round(2)}} Cr - 
-                                {{(cluster_description[cluster]['upper_limit']/10000000)|round(2)}} Cr
-                            </div>
-                            <div class="cell">
-                                {{cluster_description[cluster]['num']}}
-                            </div>
-                            <div class="cell">
-                                {{(cluster_description[cluster]['mean']/10000000)|round(2)}} Cr
-                            </div>
-                        </div>
-                        {% endfor %}
-
-                    </div>
                 </div>               
                 
             </div>

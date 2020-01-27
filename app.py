@@ -275,8 +275,6 @@ def customer_orders():
 	
 	fig.savefig(f'{upload_folder}/customer_orders_{selected_plot}_{selected_territory}_{selected_year}.png', \
 				dpi=100)
-
-	customer_cluster_dict, cluster_description_dict = calc_cluster_of_entities(entity_type='customer')
 	
 	return render_template('customer_orders.html', \
 							year_list=global_data['year_list'], \
@@ -284,9 +282,7 @@ def customer_orders():
 							upload_folder=upload_folder,\
 							selected_year=selected_year,
 							selected_plot=selected_plot, 
-							selected_territory=selected_territory,\
-							cluster_list=sorted(list(customer_cluster_dict.keys())), 
-							cluster_description=cluster_description_dict)
+							selected_territory=selected_territory)
 
 
 @app.route("/territory_wise_orders", methods=['GET', 'POST'])
@@ -445,8 +441,6 @@ def sku_wise_orders():
 	fig = create_bar_plot(x, y, xlabel, ylabel, title, ylimit=(0, max(y)*1.5),\
 							  width=0.5, rotation=30)
 	fig.savefig(f'{upload_folder}/sku_wise_orders_{selected_sku}_{selected_territory}_{selected_year}.png', dpi=100)
-
-	sku_cluster_dict, cluster_description_dict = calc_cluster_of_entities(entity_type='sku')
 		
 	return render_template('sku_wise_orders.html', \
 							year_list=global_data['year_list'], \
@@ -455,9 +449,26 @@ def sku_wise_orders():
 							upload_folder=upload_folder,\
 							selected_year=selected_year,\
 							selected_sku=selected_sku,
-							selected_territory=selected_territory,
-							cluster_list=sorted(list(sku_cluster_dict.keys())), 
-							cluster_description=cluster_description_dict)
+							selected_territory=selected_territory)
+
+@app.route("/clustering", methods=['GET', 'POST'])
+def clustering():
+	customer_cluster_dict, customer_cluster_description_dict = \
+										calc_cluster_of_entities(entity_type='customer')
+	customer_cluster_list = list(customer_cluster_dict.keys())
+	customer_cluster_avg_list = [customer_cluster_description_dict[x]['mean'] for x in customer_cluster_list]
+	customer_cluster_list = [x for _,x in sorted(zip(customer_cluster_avg_list, customer_cluster_list))]
+
+	sku_cluster_dict, sku_cluster_description_dict = calc_cluster_of_entities(entity_type='sku')
+	sku_cluster_list = list(sku_cluster_dict.keys())
+	sku_cluster_avg_list = [sku_cluster_description_dict[x]['mean'] for x in sku_cluster_list]
+	sku_cluster_list = [x for _,x in sorted(zip(sku_cluster_avg_list, sku_cluster_list))]
+
+	return render_template('clustering.html', \
+							customer_cluster_list=customer_cluster_list, 
+							customer_cluster_description=customer_cluster_description_dict,
+							sku_cluster_list=sku_cluster_list, 
+							sku_cluster_description=sku_cluster_description_dict)
 
 
 @app.route("/top_contribution", methods=['GET', 'POST'])

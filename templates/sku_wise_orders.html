@@ -6,7 +6,7 @@
 			<div class="container-table100">
 				<div class="wrap-table100">
 					<h1 class="text-center">SKU-wise Orders</h1>
-                    <h4 class="text-center">Year: {{selected_year}}, sku: {{selected_sku}}</h4>
+                    <h4 class="text-center">Year: {{selected_year}}, SKU: {{selected_sku}} ({{selected_territory}})</h4>
                     <br>
                     <form action="/sku_wise_orders" method="post" name="yearlist">
 						<select id="yearselect" name="year" class="cursor-pointer">
@@ -40,7 +40,7 @@
 						</span>
 					<br><br>
                     </form>
-                    <img src="{{upload_folder}}/sku_wise_orders_{{selected_sku}}_{{selected_year}}.png"  
+                    <img src="{{upload_folder}}/sku_wise_orders_{{selected_sku}}_{{selected_territory}}_{{selected_year}}.png"  
                         height="500" width="770">
                 
                     <br><br><br>

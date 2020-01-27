@@ -444,7 +444,7 @@ def sku_wise_orders():
 	title = f'Month-wise plot of number of orders for {selected_sku} in {selected_year} ({selected_territory})'
 	fig = create_bar_plot(x, y, xlabel, ylabel, title, ylimit=(0, max(y)*1.5),\
 							  width=0.5, rotation=30)
-	fig.savefig(f'{upload_folder}/sku_wise_orders_{selected_sku}_{selected_year}.png', dpi=100)
+	fig.savefig(f'{upload_folder}/sku_wise_orders_{selected_sku}_{selected_territory}_{selected_year}.png', dpi=100)
 
 	sku_cluster_dict, cluster_description_dict = calc_cluster_of_entities(entity_type='sku')
 		
